@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Chess</title>
+
+	<link rel="stylesheet" type="text/css" href="chess.css">
+	<script type="importmap">
+		{
+		  "imports": {
+			"chessGame": "./chess.js"
+		  }
+		}
+	</script>
+	
+</head>
+
+<body>
+	
+</body>
+	<script type="module">
+		import chessGame from 'chessGame';
+	
+		// Now you can access the object returned by the chessGame function
+		const game = chessGame.chessGame();
+		document.body.append(game);
+	  </script>
+
+</html>
