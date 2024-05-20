@@ -204,11 +204,13 @@ function chessGame(game) {
 
 
 		pieceToMove.classList.add("lastmove");
+		
+		// Update the turn
+		game.turn = game.turn === 'white' ? 'black' : 'white';
 
 	}
 
 	function clickPiece(e) {
-		clearAllHighlights();
 		const piece = e.target;
 		const square = piece.parentNode;
 
@@ -216,6 +218,7 @@ function chessGame(game) {
 		if (game.turn !== piece.dataset.color) {
 			return;
 		}
+		clearAllHighlights();
 
 		if (square.classList.contains("selected")) {
 			square.classList.remove("selected");
@@ -228,8 +231,6 @@ function chessGame(game) {
 			}
 		}
 
-		// Update the turn
-		game.turn = game.turn === 'white' ? 'black' : 'white';
 	}
 
 	function addPieces(game) {
@@ -256,6 +257,21 @@ function chessGame(game) {
 			pieceDiv.addEventListener("click", clickPiece);
 		})
 	}
+
+	function flipBoard() {
+		const board = document.getElementById("board");
+		board.classList.toggle("flipped");
+
+		// Get all the squares on the board
+		const squares = document.querySelectorAll("#board .square");
+
+		// Loop through each square and toggle the "flipped" class
+		squares.forEach(square => {
+			square.classList.toggle("flipped");
+		});
+	}
+	document.getElementById("flipBoard").addEventListener("click", flipBoard);
+
 	if (!game) {
 		game = {
 			turn: 'white',

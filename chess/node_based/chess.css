@@ -7,6 +7,9 @@
 	height: 80vw;
 	user-select: none;
 }
+.flipped {
+	transform: rotate(180deg);
+  }
 .labelSquareID {
 	opacity: .5;
 }
