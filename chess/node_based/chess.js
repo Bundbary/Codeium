@@ -1,168 +1,141 @@
-
 function chessGame(game) {
-	function createSquares() {
-		const boardDiv = document.createElement("div");
-		boardDiv.id = "board";
-		boardDiv.classList.add("board");
-		for (let i = 0; i < 8; i++) {
-			for (let j = 0; j < 8; j++) {
+	/**
+	 * Creates the chessboard with labeled squares.
+	 * @returns {HTMLElement} The chessboard element.
+	 */
+	function createBoard() {
+		const board = document.createElement("div");
+		board.id = "board";
+		board.classList.add("board");
+
+		for (let row = 0; row < 8; row++) {
+			for (let col = 0; col < 8; col++) {
 				const square = document.createElement("div");
 				square.classList.add("square");
-				const labelSquareID = document.createElement("span");
-				labelSquareID.textContent = `${String.fromCharCode(97 + j)}${8 - i}`;
 
-				labelSquareID.classList.add("labelSquareID");
-				square.appendChild(labelSquareID);
-				square.id = labelSquareID.textContent;
-				if ((i + j) % 2 === 0) {
+				const squareID = document.createElement("span");
+				squareID.textContent = `${String.fromCharCode(97 + col)}${8 - row}`;
+				squareID.classList.add("squareID");
+				square.appendChild(squareID);
+				square.id = squareID.textContent;
+
+				if ((row + col) % 2 === 0) {
 					square.classList.add("white");
-					labelSquareID.style.color = 'black';
+					squareID.style.color = 'black';
 				} else {
 					square.classList.add("black");
-					labelSquareID.style.color = 'white';
+					squareID.style.color = 'white';
 				}
 
-				boardDiv.appendChild(square);
+				board.appendChild(square);
 			}
 		}
-		return boardDiv
-	}
-	function getNewSquare(sSquareOld, aSquareNew) {
-		let row = sSquareOld.charCodeAt(0) + aSquareNew[0];
-		let col = sSquareOld.charCodeAt(1) + aSquareNew[1];
-		const sSquareNew = String.fromCharCode(row) + String.fromCharCode(col);
-		return sSquareNew;
+
+		return board;
 	}
 
+	/**
+	 * Computes the new square ID based on a move vector.
+	 * @param {string} currentSquare - The current square ID (e.g., "e2").
+	 * @param {Array<number>} move - The move vector [fileOffset, rankOffset].
+	 * @returns {string|null} The new square ID or null if out of bounds.
+	 */
+	function computeNewSquareID(currentSquare, move) {
+		const file = currentSquare.charCodeAt(0); // 'a' is 97
+		const rank = parseInt(currentSquare[1], 10);
 
-	function getNewSquare(id, move) {
-		// Assuming id is in the form of "e2", "d4", etc.
-		const file = id.charCodeAt(0); // 'a' is 97, 'b' is 98, etc.
-		const rank = parseInt(id[1], 10);
 		const newFile = String.fromCharCode(file + move[0]);
 		const newRank = rank + move[1];
+
 		if (newFile >= 'a' && newFile <= 'h' && newRank >= 1 && newRank <= 8) {
 			return newFile + newRank;
 		}
 		return null;
 	}
 
-	function isSquareOccupied(nodeSquare) {
-		return nodeSquare.querySelector("[data-piece]");
+	/**
+	 * Checks if a square is occupied by any piece.
+	 * @param {HTMLElement} square - The square element.
+	 * @returns {boolean} True if the square is occupied.
+	 */
+	function isSquareOccupied(square) {
+		return square.querySelector("[data-piece]") !== null;
 	}
 
-	function isSquareOccupiedByOpponent(nodeSquare, color) {
-		const piece = nodeSquare.querySelector("[data-piece]");
+	/**
+	 * Checks if a square is occupied by an opponent's piece.
+	 * @param {HTMLElement} square - The square element.
+	 * @param {string} color - The color of the current player's piece.
+	 * @returns {boolean} True if the square is occupied by an opponent.
+	 */
+	function isSquareOccupiedByOpponent(square, color) {
+		const piece = square.querySelector("[data-piece]");
 		return piece && piece.dataset.color !== color;
 	}
 
-	function getLegalSquares(nodePiece) {
+	/**
+	 * Gets the legal squares for a given piece.
+	 * @param {HTMLElement} piece - The piece element.
+	 * @returns {Array<HTMLElement>} An array of legal square elements.
+	 */
+	function getLegalMoves(piece) {
 		const legalSquares = [];
-		const nodeSquare = nodePiece.parentNode;
-		const colorPiece = nodePiece.dataset.color;
-		const pieceName = nodePiece.dataset.piece;
-		const nodeSquareId = nodeSquare.id;
+		const currentSquare = piece.parentNode;
+		const pieceColor = piece.dataset.color;
+		const pieceType = piece.dataset.piece;
+		const currentSquareID = currentSquare.id;
 
-		if (pieceName === "pawn") {
-			let aStraightMoves = [];
-			let aDiagMoves = [];
-			if (colorPiece === "white") {
-				aStraightMoves = [[0, 1], [0, 2]];
-				aDiagMoves = [[-1, 1], [1, 1]];
-			} else if (colorPiece === "black") {
-				aStraightMoves = [[0, -1], [0, -2]];
-				aDiagMoves = [[-1, -1], [1, -1]];
-			}
-			if (nodeSquareId.charAt(1) !== '2' && nodeSquareId.charAt(1) !== '7') {
-				aStraightMoves.pop();
-			}
-			for (let aMove of aStraightMoves) {
-				const sIDNew = getNewSquare(nodeSquareId, aMove);
-				if (!sIDNew) continue;
-				const nodeSquareNew = document.getElementById(sIDNew);
-				if (!isSquareOccupied(nodeSquareNew)) {
-					legalSquares.push(nodeSquareNew);
-				}
-			}
-			for (let aMove of aDiagMoves) {
-				const sIDNew = getNewSquare(nodeSquareId, aMove);
-				if (!sIDNew) continue;
-				const nodeSquareNew = document.getElementById(sIDNew);
-				if (nodeSquareNew && isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-					legalSquares.push(nodeSquareNew);
-				}
+		const movePatterns = {
+			pawn: pieceColor === 'white'
+				? { straight: [[0, 1], [0, 2]], diagonal: [[-1, 1], [1, 1]] }
+				: { straight: [[0, -1], [0, -2]], diagonal: [[-1, -1], [1, -1]] },
+			rook: [[1, 0], [-1, 0], [0, 1], [0, -1]],
+			knight: [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]],
+			bishop: [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+			queen: [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+			king: [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+		};
+
+		// Determine legal moves for the piece
+		if (pieceType === 'pawn') {
+			const { straight, diagonal } = movePatterns.pawn;
+			if (currentSquareID.charAt(1) !== '2' && currentSquareID.charAt(1) !== '7') {
+				straight.pop();
 			}
 
-		} else if (pieceName === "rook") {
-			const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-			directions.forEach(direction => {
+			straight.forEach(move => {
+				const newSquareID = computeNewSquareID(currentSquareID, move);
+				if (newSquareID) {
+					const newSquare = document.getElementById(newSquareID);
+					if (!isSquareOccupied(newSquare)) {
+						legalSquares.push(newSquare);
+					}
+				}
+			});
+
+			diagonal.forEach(move => {
+				const newSquareID = computeNewSquareID(currentSquareID, move);
+				if (newSquareID) {
+					const newSquare = document.getElementById(newSquareID);
+					if (newSquare && isSquareOccupiedByOpponent(newSquare, pieceColor)) {
+						legalSquares.push(newSquare);
+					}
+				}
+			});
+		} else {
+			movePatterns[pieceType].forEach(move => {
 				for (let i = 1; i < 8; i++) {
-					const sIDNew = getNewSquare(nodeSquareId, [direction[0] * i, direction[1] * i]);
-					if (!sIDNew) break;
-					const nodeSquareNew = document.getElementById(sIDNew);
-					if (isSquareOccupied(nodeSquareNew)) {
-						if (isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-							legalSquares.push(nodeSquareNew);
+					const scaledMove = [move[0] * i, move[1] * i];
+					const newSquareID = computeNewSquareID(currentSquareID, scaledMove);
+					if (!newSquareID) break;
+					const newSquare = document.getElementById(newSquareID);
+					if (isSquareOccupied(newSquare)) {
+						if (isSquareOccupiedByOpponent(newSquare, pieceColor)) {
+							legalSquares.push(newSquare);
 						}
 						break;
 					}
-					legalSquares.push(nodeSquareNew);
-				}
-			});
-
-		} else if (pieceName === "knight") {
-			const moves = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]];
-			moves.forEach(move => {
-				const sIDNew = getNewSquare(nodeSquareId, move);
-				if (!sIDNew) return;
-				const nodeSquareNew = document.getElementById(sIDNew);
-				if (!isSquareOccupied(nodeSquareNew) || isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-					legalSquares.push(nodeSquareNew);
-				}
-			});
-
-		} else if (pieceName === "bishop") {
-			const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-			directions.forEach(direction => {
-				for (let i = 1; i < 8; i++) {
-					const sIDNew = getNewSquare(nodeSquareId, [direction[0] * i, direction[1] * i]);
-					if (!sIDNew) break;
-					const nodeSquareNew = document.getElementById(sIDNew);
-					if (isSquareOccupied(nodeSquareNew)) {
-						if (isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-							legalSquares.push(nodeSquareNew);
-						}
-						break;
-					}
-					legalSquares.push(nodeSquareNew);
-				}
-			});
-
-		} else if (pieceName === "queen") {
-			const directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-			directions.forEach(direction => {
-				for (let i = 1; i < 8; i++) {
-					const sIDNew = getNewSquare(nodeSquareId, [direction[0] * i, direction[1] * i]);
-					if (!sIDNew) break;
-					const nodeSquareNew = document.getElementById(sIDNew);
-					if (isSquareOccupied(nodeSquareNew)) {
-						if (isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-							legalSquares.push(nodeSquareNew);
-						}
-						break;
-					}
-					legalSquares.push(nodeSquareNew);
-				}
-			});
-
-		} else if (pieceName === "king") {
-			const moves = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-			moves.forEach(move => {
-				const sIDNew = getNewSquare(nodeSquareId, move);
-				if (!sIDNew) return;
-				const nodeSquareNew = document.getElementById(sIDNew);
-				if (!isSquareOccupied(nodeSquareNew) || isSquareOccupiedByOpponent(nodeSquareNew, colorPiece)) {
-					legalSquares.push(nodeSquareNew);
+					legalSquares.push(newSquare);
 				}
 			});
 		}
@@ -170,47 +143,73 @@ function chessGame(game) {
 		return legalSquares;
 	}
 
-	function clearAllHighlights() {
-
+	/**
+	 * Clears all highlights and selected classes from the board.
+	 */
+	function clearHighlights() {
 		const highlightedSquares = game.board.querySelectorAll(".highlighted");
-		for (let square of highlightedSquares) {
+		highlightedSquares.forEach(square => {
 			square.classList.remove("highlighted");
 			square.removeEventListener("click", movePiece);
-		}
+		});
 
 		const selectedPieces = game.board.querySelectorAll(".selected");
-		for (let square of selectedPieces) {
+		selectedPieces.forEach(square => {
 			square.classList.remove("selected");
-		}
-		const lastMoved = game.board.querySelectorAll(".lastmove");
-		for (let square of lastMoved) {
+		});
+
+		const lastMovedPieces = game.board.querySelectorAll(".lastmove");
+		lastMovedPieces.forEach(square => {
 			square.classList.remove("lastmove");
-		}
+		});
 	}
 
+	/**
+	 * Moves a piece to a new square.
+	 * @param {Event} e - The click event.
+	 */
 	function movePiece(e) {
-		const squareNew = e.target;
-
-		const squareOld = game.board.querySelector(`.selected`);
-		clearAllHighlights();
-		const pieceToKill = squareNew.querySelector("[data-piece]");
-		if (pieceToKill) {
-			pieceToKill.remove();
+		let targetSquare = e.target;
+		if (!targetSquare.classList.contains("square")) {
+			targetSquare = targetSquare.parentNode;
 		}
-		const pieceToMove = squareOld.querySelector("[data-piece]");
-		squareNew.append(pieceToMove);
 
+		const selectedSquare = game.board.querySelector(".selected");
+		clearHighlights();
 
+		const capturedPiece = targetSquare.querySelector(".piece");
+		if (capturedPiece) {
+			capturedPiece.classList.remove("piece");
+			capturedPiece.classList.add("captured");
+			const removedContainer = capturedPiece.dataset.color === 'white' ? removedWhitePieces : removedBlackPieces;
+			removedContainer.appendChild(capturedPiece);
+		}
 
+		const movingPiece = selectedSquare.querySelector("[data-piece]");
+		targetSquare.appendChild(movingPiece);
+		movingPiece.classList.add("lastmove");
+		swapMoves();
 
-		pieceToMove.classList.add("lastmove");
-		
+	}
+	function swapMoves() {
+
 		// Update the turn
 		game.turn = game.turn === 'white' ? 'black' : 'white';
 
+		if (game.turn === 'white') {
+			removedWhitePieces.append(divTurnIcon);
+
+		} else if (game.turn === 'black') {
+			removedBlackPieces.append(divTurnIcon);
+
+		}
 	}
 
-	function clickPiece(e) {
+	/**
+	 * Handles the click event on a piece to show legal moves.
+	 * @param {Event} e - The click event.
+	 */
+	function selectPiece(e) {
 		const piece = e.target;
 		const square = piece.parentNode;
 
@@ -218,107 +217,113 @@ function chessGame(game) {
 		if (game.turn !== piece.dataset.color) {
 			return;
 		}
-		clearAllHighlights();
+		clearHighlights();
 
 		if (square.classList.contains("selected")) {
 			square.classList.remove("selected");
 		} else {
 			square.classList.add("selected");
-			const a = getLegalSquares(piece);
-			for (let squareNew of a) {
-				squareNew.classList.add("highlighted");
-				squareNew.addEventListener("click", movePiece);
-			}
+			const legalSquares = getLegalMoves(piece);
+			legalSquares.forEach(square => {
+				square.classList.add("highlighted");
+				square.addEventListener("click", movePiece);
+			});
 		}
-
 	}
 
-	function addPieces(game) {
+	/**
+	 * Adds pieces to the board based on the game state.
+	 * @param {Object} game - The game state object.
+	 */
+	/**
+ * Adds pieces to the board based on the game state.
+ * @param {Object} game - The game state object.
+ */
+	function initializePieces(game) {
 		game.pieces.forEach(piece => {
 			const square = document.getElementById(piece.square);
 			const pieceDiv = document.createElement("div");
 			pieceDiv.classList.add("piece");
-			const pieceChar = {
-				pawn: piece.color === 'white' ? '♙' : '♟',
-				rook: piece.color === 'white' ? '♖' : '♜',
-				knight: piece.color === 'white' ? '♘' : '♞',
-				bishop: piece.color === 'white' ? '♗' : '♝',
-				queen: piece.color === 'white' ? '♕' : '♛',
-				king: piece.color === 'white' ? '♔' : '♚'
-			}[piece.name];
-			// pieceDiv.createAttribute("data-piece", piece.name);
 			pieceDiv.dataset.piece = piece.name;
 			pieceDiv.dataset.color = piece.color;
 
+			const pieceSymbols = {
+				king: { white: "♔", black: "♚" },
+				queen: { white: "♕", black: "♛" },
+				rook: { white: "♖", black: "♜" },
+				bishop: { white: "♗", black: "♝" },
+				knight: { white: "♘", black: "♞" },
+				pawn: { white: "♙", black: "♟" }
+			};
 
-
-			pieceDiv.textContent = pieceChar;
+			pieceDiv.textContent = pieceSymbols[piece.name][piece.color];
+			pieceDiv.addEventListener("click", selectPiece);
 			square.appendChild(pieceDiv);
-			pieceDiv.addEventListener("click", clickPiece);
-		})
+		});
 	}
 
+
 	function flipBoard() {
-		const board = document.getElementById("board");
+		const board = document.getElementById("gameContainer");
+		removedWhitePieces.classList.toggle("flipped");
+		removedBlackPieces.classList.toggle("flipped");
 		board.classList.toggle("flipped");
+		
 
 		// Get all the squares on the board
 		const squares = document.querySelectorAll("#board .square");
-
 		// Loop through each square and toggle the "flipped" class
 		squares.forEach(square => {
 			square.classList.toggle("flipped");
 		});
+
+	}
+	function placeNodes() {
+		
 	}
 	document.getElementById("flipBoard").addEventListener("click", flipBoard);
+	// Set up the game container
+	const gameContainer = document.getElementById("gameContainer");
+	gameContainer.innerHTML = "";
 
-	if (!game) {
-		game = {
-			turn: 'white',
-			pieces: [
-				{ square: 'a1', name: 'rook', color: 'white' },
-				{ square: 'b1', name: 'knight', color: 'white' },
-				{ square: 'c1', name: 'bishop', color: 'white' },
-				{ square: 'd1', name: 'queen', color: 'white' },
-				{ square: 'e1', name: 'king', color: 'white' },
-				{ square: 'f1', name: 'bishop', color: 'white' },
-				{ square: 'g1', name: 'knight', color: 'white' },
-				{ square: 'h1', name: 'rook', color: 'white' },
-				{ square: 'a2', name: 'pawn', color: 'white' },
-				{ square: 'b2', name: 'pawn', color: 'white' },
-				{ square: 'c2', name: 'pawn', color: 'white' },
-				{ square: 'd2', name: 'pawn', color: 'white' },
-				{ square: 'e2', name: 'pawn', color: 'white' },
-				{ square: 'f2', name: 'pawn', color: 'white' },
-				{ square: 'g2', name: 'pawn', color: 'white' },
-				{ square: 'h2', name: 'pawn', color: 'white' },
-				{ square: 'a8', name: 'rook', color: 'black' },
-				{ square: 'b8', name: 'knight', color: 'black' },
-				{ square: 'c8', name: 'bishop', color: 'black' },
-				{ square: 'd8', name: 'queen', color: 'black' },
-				{ square: 'e8', name: 'king', color: 'black' },
-				{ square: 'f8', name: 'bishop', color: 'black' },
-				{ square: 'g8', name: 'knight', color: 'black' },
-				{ square: 'h8', name: 'rook', color: 'black' },
-				{ square: 'a7', name: 'pawn', color: 'black' },
-				{ square: 'b7', name: 'pawn', color: 'black' },
-				{ square: 'c7', name: 'pawn', color: 'black' },
-				{ square: 'd7', name: 'pawn', color: 'black' },
-				{ square: 'e7', name: 'pawn', color: 'black' },
-				{ square: 'f7', name: 'pawn', color: 'black' },
-				{ square: 'g7', name: 'pawn', color: 'black' },
-				{ square: 'h7', name: 'pawn', color: 'black' }
-			]
-		}
-	}
+	// Create and append the containers for removed pieces
+	const removedWhitePieces = document.createElement("div");
+	removedWhitePieces.id = "removedWhitePieces";
+	removedWhitePieces.classList.add("removed-pieces-container");
 
-	game.board = createSquares();
-	setTimeout(() => {
-		addPieces(game);
+	const removedBlackPieces = document.createElement("div");
+	removedBlackPieces.id = "removedBlackPieces";
+	removedBlackPieces.classList.add("removed-pieces-container");
 
-	}, 100);
+	
+	removedBlackPieces.textContent = "Black Pieces";
+	removedWhitePieces.textContent = "White Pieces";
 
-	return game.board;
+
+
+	const divTurnIcon = document.createElement("div");
+	divTurnIcon.id = "turnIcon";
+	divTurnIcon.classList.add("turnIcon");
+	divTurnIcon.textContent = "☺";
+
+
+	// Create and append the chessboard
+	game.board = createBoard();
+
+	gameContainer.append(removedBlackPieces);
+	gameContainer.append(game.board);
+	gameContainer.append(removedWhitePieces);
+
+	placeNodes
+
+
+	removedWhitePieces.append(divTurnIcon);
+
+	// Initialize the pieces on the board
+
+	initializePieces(game);
+	// Reposition the removed pieces containers
+	return game;
 }
 
 export default { chessGame };

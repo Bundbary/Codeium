@@ -1,17 +1,55 @@
+
+#gameContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 .board {
 	display: grid;
 	grid-template-columns: repeat(8, 1fr);
 	grid-template-rows: repeat(8, 1fr);
 	gap: 0px;
-	width: 80vw;
-	height: 80vw;
 	user-select: none;
+	width: min(80vw, 80vh);
+	height: min(80vw, 80vh);	
+}
+.removed-pieces-container {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+	margin: 10px 0;
+	width: min(80vw, 80vh);
+	 position: relative; 
+}
+
+#turnIcon{
+	
+	font-size: calc(min(80vw, 80vh) / 16); 
+	
+	position: absolute;
+	top: -3vw;
+	left: -6vw;
+
+}
+.captured{
+	display: inline;
+	
+	font-size: calc(min(80vw, 80vh) / 16); 
+	pointer-events: none;
+	line-height: .5;
 }
 .flipped {
 	transform: rotate(180deg);
   }
 .labelSquareID {
 	opacity: .5;
+}
+
+.captured[data-color="white"]{
+	float: left;
+}
+.captured[data-color="black"]{
+	float: right;
 }
 
 .square {
@@ -26,10 +64,9 @@
 	justify-content: center;
 	align-items: center;
 	cursor: pointer;
-
 	position: absolute;
 	top: 0;
-	font-size: 7vw;
+	font-size: calc(min(80vw, 80vh) / 8); 
 	width: 100%;
 	height: 100%;
 }
@@ -61,5 +98,12 @@
 }
 
 .lastmove {
-	background-color: rgba(0, 98, 255, 0.6);
+	background-color: rgba(50, 158, 255, 0.6);
+}
+
+.highlighted .piece {
+	background-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+	background-size: 100% 400%;
+
+	
 }
