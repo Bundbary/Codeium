@@ -181,7 +181,7 @@ function chessGame(game) {
 		if (capturedPiece) {
 			capturedPiece.classList.remove("piece");
 			capturedPiece.classList.add("captured");
-			const removedContainer = capturedPiece.dataset.color === 'white' ? removedWhitePieces : removedBlackPieces;
+			const removedContainer = capturedPiece.dataset.color === 'white' ? capturedWhitePieces : capturedBlackPieces;
 			removedContainer.appendChild(capturedPiece);
 		}
 
@@ -189,20 +189,29 @@ function chessGame(game) {
 		targetSquare.appendChild(movingPiece);
 		movingPiece.classList.add("lastmove");
 		swapMoves();
+		game.timer.startTimer();
 
+
+	}
+	function setWhiteBlack() {
+
+		if (game.turn === 'white') {
+			capturedWhitePieces.append(divTurnIcon);
+			capturedWhitePieces.style.backgroundColor = 'yellow';
+			capturedBlackPieces.style.backgroundColor = '';
+
+		} else {
+			capturedBlackPieces.append(divTurnIcon);
+			capturedBlackPieces.style.backgroundColor = 'yellow';
+			capturedWhitePieces.style.backgroundColor = '';
+
+		}
 	}
 	function swapMoves() {
 
 		// Update the turn
 		game.turn = game.turn === 'white' ? 'black' : 'white';
-
-		if (game.turn === 'white') {
-			removedWhitePieces.append(divTurnIcon);
-
-		} else if (game.turn === 'black') {
-			removedBlackPieces.append(divTurnIcon);
-
-		}
+		setWhiteBlack();
 	}
 
 	/**
@@ -230,17 +239,38 @@ function chessGame(game) {
 			});
 		}
 	}
-
+	function randomizePieces(array) {
+		function shuffle(a) {
+			for (let i = a.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[a[i], a[j]] = [a[j], a[i]];
+			}
+			return a;;
+		}
+		const shuffled = shuffle(['rook', 'knight', 'bishop', 'queen', 'bishop', 'king', 'knight', 'rook']);
+		const firstRow = array.filter(piece => piece.square.endsWith('1'));
+		const lastRow = array.filter(piece => piece.square.endsWith('8'));
+		for (let i = 0; i < shuffled.length; i++) {
+			firstRow[i].name = shuffled[i];
+			lastRow[i].name = shuffled[i];
+		}
+		return array;
+	}
 	/**
 	 * Adds pieces to the board based on the game state.
 	 * @param {Object} game - The game state object.
 	 */
 	/**
- * Adds pieces to the board based on the game state.
- * @param {Object} game - The game state object.
- */
+	* Adds pieces to the board based on the game state.
+	* @param {Object} game - The game state object.
+	*/
 	function initializePieces(game) {
-		game.pieces.forEach(piece => {
+		let pieces = game.pieces;
+
+
+
+
+		pieces.forEach(piece => {
 			const square = document.getElementById(piece.square);
 			const pieceDiv = document.createElement("div");
 			pieceDiv.classList.add("piece");
@@ -260,15 +290,19 @@ function chessGame(game) {
 			pieceDiv.addEventListener("click", selectPiece);
 			square.appendChild(pieceDiv);
 		});
-	}
 
+		if (game.turn === 'black') {
+			flipBoard();
+		}
+		setWhiteBlack();
+	}
 
 	function flipBoard() {
 		const board = document.getElementById("gameContainer");
-		removedWhitePieces.classList.toggle("flipped");
-		removedBlackPieces.classList.toggle("flipped");
+		capturedWhitePieces.classList.toggle("flipped");
+		capturedBlackPieces.classList.toggle("flipped");
 		board.classList.toggle("flipped");
-		
+
 
 		// Get all the squares on the board
 		const squares = document.querySelectorAll("#board .square");
@@ -276,48 +310,141 @@ function chessGame(game) {
 		squares.forEach(square => {
 			square.classList.toggle("flipped");
 		});
+	}
 
+	game.turn = game.turn || 'white';
+	if (!game.pieces) {
+		game.pieces = [
+			{ square: 'a1', name: 'rook', color: 'white' },
+			{ square: 'b1', name: 'knight', color: 'white' },
+			{ square: 'c1', name: 'bishop', color: 'white' },
+			{ square: 'd1', name: 'queen', color: 'white' },
+			{ square: 'e1', name: 'king', color: 'white' },
+			{ square: 'f1', name: 'bishop', color: 'white' },
+			{ square: 'g1', name: 'knight', color: 'white' },
+			{ square: 'h1', name: 'rook', color: 'white' },
+			{ square: 'a2', name: 'pawn', color: 'white' },
+			{ square: 'b2', name: 'pawn', color: 'white' },
+			{ square: 'c2', name: 'pawn', color: 'white' },
+			{ square: 'd2', name: 'pawn', color: 'white' },
+			{ square: 'e2', name: 'pawn', color: 'white' },
+			{ square: 'f2', name: 'pawn', color: 'white' },
+			{ square: 'g2', name: 'pawn', color: 'white' },
+			{ square: 'h2', name: 'pawn', color: 'white' },
+			{ square: 'a7', name: 'pawn', color: 'black' },
+			{ square: 'b7', name: 'pawn', color: 'black' },
+			{ square: 'c7', name: 'pawn', color: 'black' },
+			{ square: 'd7', name: 'pawn', color: 'black' },
+			{ square: 'e7', name: 'pawn', color: 'black' },
+			{ square: 'f7', name: 'pawn', color: 'black' },
+			{ square: 'g7', name: 'pawn', color: 'black' },
+			{ square: 'h7', name: 'pawn', color: 'black' },
+			{ square: 'a8', name: 'rook', color: 'black' },
+			{ square: 'b8', name: 'knight', color: 'black' },
+			{ square: 'c8', name: 'bishop', color: 'black' },
+			{ square: 'd8', name: 'queen', color: 'black' },
+			{ square: 'e8', name: 'king', color: 'black' },
+			{ square: 'f8', name: 'bishop', color: 'black' },
+			{ square: 'g8', name: 'knight', color: 'black' },
+			{ square: 'h8', name: 'rook', color: 'black' }
+		];
+
+		if (game.randomizePieces) {
+			game.pieces = randomizePieces(game.pieces);
+		}
 	}
-	function placeNodes() {
-		
-	}
+	// game.randomizePieces=game.randomizePieces||randomizePieces(game.pieces);
+
 	document.getElementById("flipBoard").addEventListener("click", flipBoard);
 	// Set up the game container
 	const gameContainer = document.getElementById("gameContainer");
 	gameContainer.innerHTML = "";
 
 	// Create and append the containers for removed pieces
-	const removedWhitePieces = document.createElement("div");
-	removedWhitePieces.id = "removedWhitePieces";
-	removedWhitePieces.classList.add("removed-pieces-container");
+	const capturedWhitePieces = document.createElement("div");
+	capturedWhitePieces.id = "capturedWhitePieces";
+	capturedWhitePieces.classList.add("captured-pieces-container");
 
-	const removedBlackPieces = document.createElement("div");
-	removedBlackPieces.id = "removedBlackPieces";
-	removedBlackPieces.classList.add("removed-pieces-container");
+	const capturedBlackPieces = document.createElement("div");
+	capturedBlackPieces.id = "capturedBlackPieces";
+	capturedBlackPieces.classList.add("captured-pieces-container");
 
-	
-	removedBlackPieces.textContent = "Black Pieces";
-	removedWhitePieces.textContent = "White Pieces";
+	capturedBlackPieces.textContent = "Black";
+	capturedWhitePieces.textContent = "White";
 
 
 
 	const divTurnIcon = document.createElement("div");
 	divTurnIcon.id = "turnIcon";
 	divTurnIcon.classList.add("turnIcon");
-	divTurnIcon.textContent = "☺";
+	divTurnIcon.textContent = "➧";
 
 
 	// Create and append the chessboard
 	game.board = createBoard();
 
-	gameContainer.append(removedBlackPieces);
+	gameContainer.append(capturedBlackPieces);
 	gameContainer.append(game.board);
-	gameContainer.append(removedWhitePieces);
-
-	placeNodes
+	gameContainer.append(capturedWhitePieces);
 
 
-	removedWhitePieces.append(divTurnIcon);
+	capturedWhitePieces.append(divTurnIcon);
+
+	function initializeTimers() {
+		function updateTimerDisplay(timer, timerSeconds) {
+			let seconds = timerSeconds % 60;
+			let minutes = Math.floor(timerSeconds / 60);
+			timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		}
+		const timerWhite = document.createElement("div");
+		timerWhite.id = "timerWhite";
+		timerWhite.classList.add("timer");
+		capturedWhitePieces.prepend(timerWhite);
+
+		const timerBlack = document.createElement("div");
+		timerBlack.id = "timerBlack";
+		timerBlack.classList.add("timer");
+		capturedBlackPieces.prepend(timerBlack);
+
+		let timerInterval;
+
+		let timerWhiteSeconds = 600; // 10 minutes in seconds
+		let timerBlackSeconds = 600; // 10 minutes in seconds
+
+		function updateTimer() {
+
+			if (game.turn === "white") {
+				timerWhiteSeconds--;
+				if (timerWhiteSeconds < 0) {
+					clearInterval(window.nChessInterval);
+				} else {
+					updateTimerDisplay(timerWhite, timerWhiteSeconds);
+				}
+			} else {
+				timerBlackSeconds--;
+				if (timerBlackSeconds < 0) {
+					clearInterval(window.nChessInterval);
+				} else {
+					updateTimerDisplay(timerBlack, timerBlackSeconds);
+				}
+			}
+		}
+
+		function startTimer() {
+			if (!window.nChessInterval) {
+				window.nChessInterval = setInterval(updateTimer, 1000);
+			}
+
+		}
+		updateTimerDisplay(timerWhite, timerWhiteSeconds);
+		updateTimerDisplay(timerBlack, timerBlackSeconds);
+		return { startTimer }
+
+	}
+
+	game.timer = initializeTimers();
+
+
 
 	// Initialize the pieces on the board
 

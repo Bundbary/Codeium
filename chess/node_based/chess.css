@@ -1,9 +1,12 @@
-
+html,body {
+	font-family:monospace
+}
 #gameContainer {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
+
 .board {
 	display: grid;
 	grid-template-columns: repeat(8, 1fr);
@@ -11,44 +14,50 @@
 	gap: 0px;
 	user-select: none;
 	width: min(80vw, 80vh);
-	height: min(80vw, 80vh);	
+	height: min(80vw, 80vh);
 }
-.removed-pieces-container {
+
+.captured-pieces-container {
 	display: flex;
 	flex-wrap: wrap;
 	width: 100%;
 	margin: 10px 0;
 	width: min(80vw, 80vh);
-	 position: relative; 
+	position: relative;
 }
 
-#turnIcon{
-	
-	font-size: calc(min(80vw, 80vh) / 16); 
-	
+#turnIcon {
+
+	font-size: calc(min(80vw, 80vh) / 16);
+
 	position: absolute;
-	top: -3vw;
-	left: -6vw;
+	top: -2vw;
+	left: -5vw;
+	width: 100%;
 
 }
-.captured{
+
+.captured {
 	display: inline;
-	
-	font-size: calc(min(80vw, 80vh) / 16); 
+
+	font-size: calc(min(80vw, 80vh) / 16);
 	pointer-events: none;
 	line-height: .5;
 }
+
 .flipped {
 	transform: rotate(180deg);
-  }
+}
+
 .labelSquareID {
 	opacity: .5;
 }
 
-.captured[data-color="white"]{
+.captured[data-color="white"] {
 	float: left;
 }
-.captured[data-color="black"]{
+
+.captured[data-color="black"] {
 	float: right;
 }
 
@@ -66,7 +75,7 @@
 	cursor: pointer;
 	position: absolute;
 	top: 0;
-	font-size: calc(min(80vw, 80vh) / 8); 
+	font-size: calc(min(80vw, 80vh) / 8);
 	width: 100%;
 	height: 100%;
 }
@@ -76,7 +85,7 @@
 }
 
 .white {
-	background-color: rgb(230, 230, 230);
+	background-color: rgb(250, 250, 250);
 }
 
 .black {
@@ -102,8 +111,14 @@
 }
 
 .highlighted .piece {
-	background-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-	background-size: 100% 400%;
-
-	
+	background: linear-gradient(to bottom right, transparent calc(50% - 1px), #f00 calc(50% - 1px), #f00 calc(50% + 1px), transparent calc(50% + 1px)),
+		linear-gradient(to bottom left, transparent calc(50% - 1px), #f00 calc(50% - 1px), #f00 calc(50% + 1px), transparent calc(50% + 1px));
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+}
+.timer {
+	font-size: calc(min(80vw, 80vh) / 20);
+	position: absolute;
+	right:0;
+	top:-10px
 }
