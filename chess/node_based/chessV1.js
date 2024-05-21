@@ -174,9 +174,9 @@ function chessGame(game) {
 
 	function clearAllHighlights() {
 
-		const highlightedSquares = game.board.querySelectorAll(".highlighted");
-		for (let square of highlightedSquares) {
-			square.classList.remove("highlighted");
+		const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
+		for (let square of legalSquaresSquares) {
+			square.classList.remove("legalSquares");
 			square.removeEventListener("click", movePiece);
 		}
 
@@ -238,7 +238,7 @@ function chessGame(game) {
 			square.classList.add("selected");
 			const a = getLegalSquares(piece);
 			for (let squareNew of a) {
-				squareNew.classList.add("highlighted");
+				squareNew.classList.add("legalSquares");
 				squareNew.addEventListener("click", movePiece);
 			}
 		}

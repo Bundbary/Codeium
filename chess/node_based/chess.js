@@ -147,9 +147,9 @@ function chessGame(game) {
 	 * Clears all highlights and selected classes from the board.
 	 */
 	function clearHighlights() {
-		const highlightedSquares = game.board.querySelectorAll(".highlighted");
-		highlightedSquares.forEach(square => {
-			square.classList.remove("highlighted");
+		const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
+		legalSquaresSquares.forEach(square => {
+			square.classList.remove("legalSquares");
 			square.removeEventListener("click", movePiece);
 		});
 
@@ -234,7 +234,7 @@ function chessGame(game) {
 			square.classList.add("selected");
 			const legalSquares = getLegalMoves(piece);
 			legalSquares.forEach(square => {
-				square.classList.add("highlighted");
+				square.classList.add("legalSquares");
 				square.addEventListener("click", movePiece);
 			});
 		}
@@ -276,6 +276,7 @@ function chessGame(game) {
 			pieceDiv.classList.add("piece");
 			pieceDiv.dataset.piece = piece.name;
 			pieceDiv.dataset.color = piece.color;
+			
 
 			const pieceSymbols = {
 				king: { white: "♔", black: "♚" },
