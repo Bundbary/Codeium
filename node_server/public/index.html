@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+</head>
+<body>
+  <h1>Chat App</h1>
+  <div id="messages"></div>
+  <input type="text" id="messageInput" placeholder="Type a message">
+  <button id="sendButton">Send</button>
+
+  <script>
+    // Connect to the WebSocket server
+    const ws = new WebSocket('ws://localhost:3000');
+
+    // Get references to the HTML elements
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    // Function to append a message to the messages div
+    function appendMessage(message) {
+      const messageElement = document.createElement('div');
+      messageElement.textContent = message;
+      messagesDiv.appendChild(messageElement);
+    }
+
+    // Set up WebSocket open event
+    ws.onopen = () => {
+      console.log('Connected to the server');
+    };
+
+    // Set up WebSocket message event
+    ws.onmessage = event => {
+      const data = JSON.parse(event.data);
+      appendMessage(data.text);
+    };
+
+    // Set up WebSocket close event
+    ws.onclose = () => {
+      console.log('Disconnected from the server');
+    };
+
+    // Set up click event for the send button
+    sendButton.addEventListener('click', () => {
+      const message = messageInput.value;
+
+      // Create a JSON object with the message
+      const data = { text: message };
+
+      // Send the message as a JSON string to the server
+      ws.send(JSON.stringify(data));
+
+      // Clear the input field
+      messageInput.value = '';
+    });
+  </script>
+</body>
+</html>

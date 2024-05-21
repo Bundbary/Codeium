@@ -410,6 +410,7 @@ function chessGame(game) {
 
 		let timerWhiteSeconds = 600; // 10 minutes in seconds
 		let timerBlackSeconds = 600; // 10 minutes in seconds
+		let bonusSeconds=12;
 
 		function updateTimer() {
 
@@ -431,9 +432,16 @@ function chessGame(game) {
 		}
 
 		function startTimer() {
+			if (game.turn === "white") {
+				timerWhiteSeconds+=bonusSeconds;
+			} else {
+				timerBlackSeconds+=bonusSeconds;
+			}
+			updateTimer()
 			if (!window.nChessInterval) {
 				window.nChessInterval = setInterval(updateTimer, 1000);
 			}
+			
 
 		}
 		updateTimerDisplay(timerWhite, timerWhiteSeconds);

@@ -1,44 +1,79 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Board</title>
-  <style>
-    .chessboard {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-gap: 1px;
-      background-color: #ccc;
-      font-family: monospace;
-      font-size: 5vw; /* Adjust this value to change the piece size */
-      text-align: center;
-      line-height: 1; /* Vertically center the pieces */
-    }
-
-    .chessboard > div {
-      display: flex;
-      justify-content: center; /* Horizontally center the pieces */
-      align-items: center;
-      aspect-ratio: 1/1; /* Maintain square aspect ratio */
-      background-color: #fff;
-    }
-
-    .chessboard > div:nth-child(odd):nth-child(-n+8),
-    .chessboard > div:nth-child(even):nth-child(n+9) {
-      background-color: #999;
-    }
-  </style>
 </head>
+
 <body>
-  <div class="chessboard">
-    <div>&#9820;</div> <!-- White rook -->
-    <div>&#9822;</div> <!-- White knight -->
-    <!-- Add more squares and pieces here -->
-  </div>
 
   <script>
-    // You can use JavaScript to dynamically create the chessboard and pieces
+
+
+
+
+    const gameExisting = {
+      turn: 'white',
+      pieces: [
+        { square: 'a1', name: 'rook', color: 'white' },
+        { square: 'b1', name: 'knight', color: 'white' },
+        { square: 'c1', name: 'bishop', color: 'white' },
+        { square: 'd1', name: 'queen', color: 'white' },
+        { square: 'e1', name: 'king', color: 'white' },
+        { square: 'f1', name: 'bishop', color: 'white' },
+        { square: 'g1', name: 'knight', color: 'white' },
+        { square: 'h1', name: 'rook', color: 'white' },
+        { square: 'a2', name: 'pawn', color: 'white' },
+        { square: 'b2', name: 'pawn', color: 'white' },
+        { square: 'c2', name: 'pawn', color: 'white' },
+        { square: 'd2', name: 'pawn', color: 'white' },
+        { square: 'e2', name: 'pawn', color: 'white' },
+        { square: 'f2', name: 'pawn', color: 'white' },
+        { square: 'g2', name: 'pawn', color: 'white' },
+        { square: 'h2', name: 'pawn', color: 'white' },
+        { square: 'a7', name: 'pawn', color: 'black' },
+        { square: 'b7', name: 'pawn', color: 'black' },
+        { square: 'c7', name: 'pawn', color: 'black' },
+        { square: 'd7', name: 'pawn', color: 'black' },
+        { square: 'e7', name: 'pawn', color: 'black' },
+        { square: 'f7', name: 'pawn', color: 'black' },
+        { square: 'g7', name: 'pawn', color: 'black' },
+        { square: 'h7', name: 'pawn', color: 'black' },
+        { square: 'a8', name: 'rook', color: 'black' },
+        { square: 'b8', name: 'knight', color: 'black' },
+        { square: 'c8', name: 'bishop', color: 'black' },
+        { square: 'd8', name: 'queen', color: 'black' },
+        { square: 'e8', name: 'king', color: 'black' },
+        { square: 'f8', name: 'bishop', color: 'black' },
+        { square: 'g8', name: 'knight', color: 'black' },
+        { square: 'h8', name: 'rook', color: 'black' }
+      ]
+    };
+
+    function shufflePieces(array) {
+      function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;;
+      }
+      const shuffled = shuffle(['rook', 'knight', 'bishop', 'queen', 'bishop', 'king', 'knight', 'rook']);
+      const firstRow = array.filter(piece => piece.square.endsWith('1'));
+      const lastRow = array.filter(piece => piece.square.endsWith('8'));
+      for (let i = 0; i < shuffled.length; i++) {
+        firstRow[i].name = shuffled[i];
+        lastRow[i].name = shuffled[i];
+      }
+      return array;
+    }
+
+
+    console.log(shufflePieces(gameExisting.pieces));
+
   </script>
 </body>
+
 </html>
