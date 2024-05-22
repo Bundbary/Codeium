@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Chess Game Lobby</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			max-width: 800px;
+			margin: 20px auto;
+			padding: 20px;
+			background-color: #fff;
+			border-radius: 8px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+		}
+
+		h1 {
+			text-align: center;
+		}
+
+		.form-group {
+			margin-bottom: 15px;
+		}
+
+		.form-group label {
+			display: block;
+			margin-bottom: 5px;
+		}
+
+		.form-group input,
+		.form-group select,
+		.form-group button {
+			width: 100%;
+			padding: 10px;
+			margin: 5px 0;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+		}
+
+		.challenge-list {
+			list-style-type: none;
+			padding: 0;
+		}
+
+		.challenge-item {
+			padding: 10px;
+			background-color: #e9e9e9;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			margin-bottom: 10px;
+			cursor: pointer;
+		}
+
+		.challenge-item:hover {
+			background-color: #d9d9d9;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<h1>Chess Game Lobby</h1>
+		<div id="userSection">
+			<div class="form-group">
+				<label for="username">Enter your username:</label>
+				<input type="text" id="username">
+			</div>
+			<div class="form-group">
+				<button id="loginButton">Login</button>
+			</div>
+		</div>
+
+		<div id="challengeSection" style="display:none;">
+			<h2>Create a Challenge</h2>
+			<div class="form-group">
+				<label for="challengeTitle">Challenge Title:</label>
+				<input type="text" id="challengeTitle">
+			</div>
+			<div class="form-group">
+				<label for="challengeOptions">Challenge Options:</label>
+				<input type="text" id="challengeOptions">
+			</div>
+			<div class="form-group">
+				<button id="createChallengeButton">Create Challenge</button>
+			</div>
+
+			<h2>Challenges</h2>
+			<ul id="challengeList" class="challenge-list"></ul>
+		</div>
+	</div>
+
+	<script>
+		// WebSocket setup
+		const socket = new WebSocket('ws://localhost:3000');
+
+		// DOM elements
+		const userSection = document.getElementById('userSection');
+		const challengeSection = document.getElementById('challengeSection');
+		const usernameInput = document.getElementById('username');
+		const loginButton = document.getElementById('loginButton');
+		const challengeTitleInput = document.getElementById('challengeTitle');
+		const challengeOptionsInput = document.getElementById('challengeOptions');
+		const createChallengeButton = document.getElementById('createChallengeButton');
+		const challengeList = document.getElementById('challengeList');
+
+		let username = '';
+		let challenges = [];
+
+		// Save the username in localStorage
+
+
+		// Populate the username if it exists in localStorage
+		usernameInput.value = localStorage.getItem('username') || '';
+		// Handle login
+		loginButton.addEventListener('click', () => {
+			username = usernameInput.value;
+			if (username) {
+
+				localStorage.setItem('username', username);
+				socket.send(JSON.stringify({ type: 'login', username }));
+				userSection.style.display = 'none';
+				challengeSection.style.display = 'block';
+			}
+		});
+
+		// Handle create challenge
+		createChallengeButton.addEventListener('click', () => {
+			const challengeTitle = challengeTitleInput.value;
+			const challengeOptions = challengeOptionsInput.value;
+
+			// Save the challenge title and options in localStorage
+			localStorage.setItem('challengeTitle', challengeTitle);
+			localStorage.setItem('challengeOptions', challengeOptions);
+
+			// Populate the challenge title and options if they exist in localStorage
+			challengeTitleInput.value = localStorage.getItem('challengeTitle') || '';
+			challengeOptionsInput.value = localStorage.getItem('challengeOptions') || '';
+
+			if (challengeTitle && challengeOptions) {
+				const challenge = {
+					title: challengeTitle,
+					options: challengeOptions,
+					creator: username
+				};
+				socket.send(JSON.stringify({ type: 'createChallenge', challenge }));
+			}
+		});
+
+		// Handle incoming messages
+		socket.onmessage = (event) => {
+			const message = JSON.parse(event.data);
+
+			if (message.type === 'createChallenge') {
+				updateChallengeList(message);
+			}
+		};
+
+		// Update challenge list
+		function updateChallengeList(message) {
+			challenges.push(message.challenge);
+			challengeList.innerHTML = '';
+			challenges.forEach(challenge => {
+				const li = document.createElement('li');
+				li.className = 'challenge-item';
+				li.textContent = `${challenge.title} by ${challenge.creator} - ${challenge.options}`;
+				li.addEventListener('click', () => {
+					window.open('chess.htm?challenge=' + encodeURIComponent(JSON.stringify(challenge)), '_blank');
+				});
+				challengeList.appendChild(li);
+			});
+		}
+		
+		// update all inputs with localStorage vals when the page loads
+		window.addEventListener('load', () => {
+			const inputs = document.querySelectorAll('input');
+			inputs.forEach(input => {
+				const key = input.id;
+				const value = localStorage.getItem(key);
+				if (value) {
+					input.value = value;
+				}
+			});
+		});
+	</script>
+</body>
+
+</html>

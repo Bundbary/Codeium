@@ -1,4 +1,37 @@
 function chessGame(game) {
+	function getWebSocket() {
+		const socket = new WebSocket('ws://localhost:3000');
+
+		socket.onopen = function (event) {
+			console.log('Connected to WebSocket server');
+		};
+
+		socket.onmessage = function (event) {
+			const message = JSON.parse(event.data);
+			// Handle the incoming move
+			handleIncomingMove(message);
+		};
+
+		socket.onclose = function (event) {
+			console.log('Disconnected from WebSocket server');
+		};
+
+		socket.onerror = function (error) {
+			console.error('WebSocket error:', error);
+		};
+
+
+		function handleIncomingMove(move) {
+			// Update the chess board with the incoming move
+			// This function should update the UI based on the move received
+			console.log('Move received:', move);
+			// Example: updateBoard(move);
+		}
+		return socket;
+	}
+
+
+
 	/**
 	 * Creates the chessboard with labeled squares.
 	 * @returns {HTMLElement} The chessboard element.
@@ -189,6 +222,12 @@ function chessGame(game) {
 		targetSquare.appendChild(movingPiece);
 		movingPiece.classList.add("lastmove");
 		swapMoves();
+
+
+		game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id }));
+
+
+
 		game.timer.startTimer();
 
 
@@ -276,7 +315,7 @@ function chessGame(game) {
 			pieceDiv.classList.add("piece");
 			pieceDiv.dataset.piece = piece.name;
 			pieceDiv.dataset.color = piece.color;
-			
+
 
 			const pieceSymbols = {
 				king: { white: "♔", black: "♚" },
@@ -291,10 +330,10 @@ function chessGame(game) {
 			pieceDiv.addEventListener("click", selectPiece);
 			square.appendChild(pieceDiv);
 		});
-
-		if (game.turn === 'black') {
-			flipBoard();
-		}
+		//this is wrong. we do want to flip at start sometimes but not for this reason
+		// if (game.turn === 'black') {
+		// 	flipBoard();
+		// }
 		setWhiteBlack();
 	}
 
@@ -312,7 +351,20 @@ function chessGame(game) {
 			square.classList.toggle("flipped");
 		});
 	}
+	function getGameFromURL() {
+		const urlParams = new URLSearchParams(window.location.search);
+		let challenge = urlParams.get('challenge');
 
+		if (challenge) {
+			challenge = atob(decodeURIComponent(challenge));
+			game = JSON.parse(challenge);
+			return game;
+		}
+		return {};
+	}
+	if (!game) {
+		game = getGameFromURL();
+	}
 	game.turn = game.turn || 'white';
 	if (!game.pieces) {
 		game.pieces = [
@@ -411,7 +463,7 @@ function chessGame(game) {
 
 		let timerWhiteSeconds = 600; // 10 minutes in seconds
 		let timerBlackSeconds = 600; // 10 minutes in seconds
-		let bonusSeconds=12;
+		let bonusSeconds = 12;
 
 		function updateTimer() {
 
@@ -434,15 +486,15 @@ function chessGame(game) {
 
 		function startTimer() {
 			if (game.turn === "white") {
-				timerWhiteSeconds+=bonusSeconds;
+				timerWhiteSeconds += bonusSeconds;
 			} else {
-				timerBlackSeconds+=bonusSeconds;
+				timerBlackSeconds += bonusSeconds;
 			}
 			updateTimer()
 			if (!window.nChessInterval) {
 				window.nChessInterval = setInterval(updateTimer, 1000);
 			}
-			
+
 
 		}
 		updateTimerDisplay(timerWhite, timerWhiteSeconds);
@@ -453,7 +505,7 @@ function chessGame(game) {
 
 	game.timer = initializeTimers();
 
-
+	game.webSocket = getWebSocket();
 
 	// Initialize the pieces on the board
 

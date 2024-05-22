@@ -10,24 +10,15 @@
 <body>
 
   <script>
+    console.log(encodeURIComponent(btoa(`{"turn":"black","randomizePieces":true}`)));
 
-    function htmlEntityToUnicode(entity) {
-      // Create a temporary element to decode the HTML entity
-      const tempElement = document.createElement('div');
-      tempElement.innerHTML = entity;
-      const decodedChar = tempElement.textContent || tempElement.innerText;
 
-      // Get the Unicode code point of the character
-      const codePoint = decodedChar.codePointAt(0).toString(16).toUpperCase();
 
-      // Format the code point for CSS content property
-      return `\\${codePoint}`;
-    }
 
-    // Example usage
-    const entity = "&#8902;";
-    const unicodeForCSS = htmlEntityToUnicode(entity);
-    console.log(unicodeForCSS); // Output: "\2219"
+
+
+
+
   </script>
 </body>
 

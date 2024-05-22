@@ -31,10 +31,10 @@ wss.on('connection', ws => {
   // Set up message event
   ws.on('message', message => {
     console.log(`Received message: ${message}`);
-    
+
     // Parse the incoming message as JSON
     const data = JSON.parse(message);
-    
+
     // Broadcast the received message to all connected clients
     broadcast(data);
   });
