@@ -49,7 +49,7 @@ function chessGame(game) {
 				const squareID = document.createElement("span");
 				squareID.textContent = `${String.fromCharCode(97 + col)}${8 - row}`;
 				squareID.classList.add("squareID");
-				square.appendChild(squareID);
+				square.append(squareID);
 				square.id = squareID.textContent;
 
 				if ((row + col) % 2 === 0) {
@@ -60,7 +60,7 @@ function chessGame(game) {
 					squareID.style.color = 'white';
 				}
 
-				board.appendChild(square);
+				board.append(square);
 			}
 		}
 
@@ -215,19 +215,21 @@ function chessGame(game) {
 			capturedPiece.classList.remove("piece");
 			capturedPiece.classList.add("captured");
 			const removedContainer = capturedPiece.dataset.color === 'white' ? capturedWhitePieces : capturedBlackPieces;
-			removedContainer.appendChild(capturedPiece);
+			removedContainer.append(capturedPiece);
 		}
 
 		const movingPiece = selectedSquare.querySelector("[data-piece]");
-		targetSquare.appendChild(movingPiece);
+		targetSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
 		swapMoves();
 
 
-		game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id }));
+		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN) {
+
+			game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id }));
 
 
-
+		}
 		game.timer.startTimer();
 
 
@@ -235,12 +237,12 @@ function chessGame(game) {
 	function setWhiteBlack() {
 
 		if (game.turn === 'white') {
-			capturedWhitePieces.append(divTurnIcon);
+			capturedWhitePieces.prepend(divTurnIcon);
 			capturedWhitePieces.style.backgroundColor = 'yellow';
 			capturedBlackPieces.style.backgroundColor = '';
 
 		} else {
-			capturedBlackPieces.append(divTurnIcon);
+			capturedBlackPieces.prepend(divTurnIcon);
 			capturedBlackPieces.style.backgroundColor = 'yellow';
 			capturedWhitePieces.style.backgroundColor = '';
 
@@ -328,7 +330,7 @@ function chessGame(game) {
 
 			pieceDiv.textContent = pieceSymbols[piece.name][piece.color];
 			pieceDiv.addEventListener("click", selectPiece);
-			square.appendChild(pieceDiv);
+			square.append(pieceDiv);
 		});
 		//this is wrong. we do want to flip at start sometimes but not for this reason
 		// if (game.turn === 'black') {
@@ -430,7 +432,7 @@ function chessGame(game) {
 	const divTurnIcon = document.createElement("div");
 	divTurnIcon.id = "turnIcon";
 	divTurnIcon.classList.add("turnIcon");
-	divTurnIcon.textContent = "➧";
+	divTurnIcon.textContent = "★";
 
 
 	// Create and append the chessboard
@@ -441,7 +443,7 @@ function chessGame(game) {
 	gameContainer.append(capturedWhitePieces);
 
 
-	capturedWhitePieces.append(divTurnIcon);
+	capturedWhitePieces.prepend(divTurnIcon);
 
 	function initializeTimers() {
 		function updateTimerDisplay(timer, timerSeconds) {
