@@ -157,18 +157,30 @@ function chessGame(game) {
 			});
 		} else {
 			movePatterns[pieceType].forEach(move => {
-				for (let i = 1; i < 8; i++) {
-					const scaledMove = [move[0] * i, move[1] * i];
-					const newSquareID = computeNewSquareID(currentSquareID, scaledMove);
-					if (!newSquareID) break;
-					const newSquare = document.getElementById(newSquareID);
-					if (isSquareOccupied(newSquare)) {
-						if (isSquareOccupiedByOpponent(newSquare, pieceColor)) {
+				if (pieceType === 'king' || pieceType === 'knight') {
+					// Handle king and knight moves without scaling
+					const newSquareID = computeNewSquareID(currentSquareID, move);
+					if (newSquareID) {
+						const newSquare = document.getElementById(newSquareID);
+						if (!isSquareOccupied(newSquare) || isSquareOccupiedByOpponent(newSquare, pieceColor)) {
 							legalSquares.push(newSquare);
 						}
-						break;
 					}
-					legalSquares.push(newSquare);
+				} else {
+					// Handle sliding pieces (rook, bishop, queen)
+					for (let i = 1; i < 8; i++) {
+						const scaledMove = [move[0] * i, move[1] * i];
+						const newSquareID = computeNewSquareID(currentSquareID, scaledMove);
+						if (!newSquareID) break;
+						const newSquare = document.getElementById(newSquareID);
+						if (isSquareOccupied(newSquare)) {
+							if (isSquareOccupiedByOpponent(newSquare, pieceColor)) {
+								legalSquares.push(newSquare);
+							}
+							break;
+						}
+						legalSquares.push(newSquare);
+					}
 				}
 			});
 		}
@@ -238,13 +250,13 @@ function chessGame(game) {
 
 		if (game.turn === 'white') {
 			capturedWhitePieces.prepend(divTurnIcon);
-			capturedWhitePieces.style.backgroundColor = 'yellow';
-			capturedBlackPieces.style.backgroundColor = '';
+			capturedWhitePieces.classList.add('selected');
+			capturedBlackPieces.classList.remove('selected');
 
 		} else {
 			capturedBlackPieces.prepend(divTurnIcon);
-			capturedBlackPieces.style.backgroundColor = 'yellow';
-			capturedWhitePieces.style.backgroundColor = '';
+			capturedBlackPieces.classList.add('selected');
+			capturedWhitePieces.classList.remove('selected');
 
 		}
 	}
@@ -424,10 +436,30 @@ function chessGame(game) {
 	capturedBlackPieces.id = "capturedBlackPieces";
 	capturedBlackPieces.classList.add("captured-pieces-container");
 
+
 	capturedBlackPieces.textContent = "Black";
 	capturedWhitePieces.textContent = "White";
 
+	if (game.creator) {
+		const startingColor = game.startingColor === 'random' ? Math.random() < 0.5 ? 'White' : 'Black' : game.startingColor;
+		game.creator = {
+			name: game.creator,
+			color: startingColor
+		};
+		game.acceptor = {
+			name: game.acceptor,
+			color: startingColor === 'White' ? 'Black' : 'White'
+		};
 
+		if (game.creator.color == 'Black') {
+			capturedWhitePieces.textContent = game.acceptor.name;
+			capturedBlackPieces.textContent = game.creator.name;
+
+		} else {
+			capturedWhitePieces.textContent = game.creator.name;
+			capturedBlackPieces.textContent = game.acceptor.name;
+		}
+	}
 
 	const divTurnIcon = document.createElement("div");
 	divTurnIcon.id = "turnIcon";
