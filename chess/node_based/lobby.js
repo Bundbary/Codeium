@@ -1,4 +1,5 @@
 function chessLobby(game) {
+	//START THE SERVER HERE. c:\Users\bpenn\ExpectancyLearning\CodeiumTest\node_server\server.js
 	function getWebSocket() {
 		const socket = new WebSocket('ws://localhost:3000');
 

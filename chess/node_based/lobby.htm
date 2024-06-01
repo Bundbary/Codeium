@@ -71,7 +71,7 @@
 		<div id="userSection">
 			<div class="form-group">
 				<label for="username">Enter your username:</label>
-				<input type="text" id="username">
+				<input type="text" id="username" name="username" autocomplete="username">
 			</div>
 			<div class="form-group">
 				<button id="loginButton">Login</button>
@@ -79,20 +79,29 @@
 		</div>
 
 		<div id="challengeSection" style="display:none;">
-			<h2>Create a Challenge</h2>
+			<h2 id="usernameHeader"></h2>
+			<h3>Create a Challenge</h3>
 			<div class="form-group">
-				<label for="challengeTitle">Challenge Title:</label>
-				<input type="text" id="challengeTitle">
+				<label for="startingColor">Starting Color:</label>
+				<select id="startingColor">
+					<option value="white">White</option>
+					<option value="black">Black</option>
+					<option value="random">Random</option>
+				</select>
 			</div>
 			<div class="form-group">
-				<label for="challengeOptions">Challenge Options:</label>
-				<input type="text" id="challengeOptions">
+				<label for="gameType">Type of game:</label>
+				<select id="gameType">
+					<option value="normal">Normal</option>
+					<option value="billy-fischer-random">Billy Fischer Random</option>
+				</select>
 			</div>
+
 			<div class="form-group">
 				<button id="createChallengeButton">Create Challenge</button>
 			</div>
 
-			<h2>Challenges</h2>
+			<h3>Challenges</h3>
 			<ul id="challengeList" class="challenge-list"></ul>
 		</div>
 	</div>
@@ -106,8 +115,7 @@
 		const challengeSection = document.getElementById('challengeSection');
 		const usernameInput = document.getElementById('username');
 		const loginButton = document.getElementById('loginButton');
-		const challengeTitleInput = document.getElementById('challengeTitle');
-		const challengeOptionsInput = document.getElementById('challengeOptions');
+
 		const createChallengeButton = document.getElementById('createChallengeButton');
 		const challengeList = document.getElementById('challengeList');
 
@@ -124,42 +132,50 @@
 			username = usernameInput.value;
 			if (username) {
 
-				localStorage.setItem('username', username);
-				socket.send(JSON.stringify({ type: 'login', username }));
-				userSection.style.display = 'none';
-				challengeSection.style.display = 'block';
+
+
+				try {
+					localStorage.setItem('username', username);
+					socket.send(JSON.stringify({ username }));
+					userSection.style.display = 'none';
+					challengeSection.style.display = 'block';
+
+					usernameHeader.textContent = `Logged in as ${username}`;
+
+
+
+				} catch (error) {
+					console.error('Error saving username:', error);
+					alert('No server available.')
+				}
 			}
 		});
 
 		// Handle create challenge
 		createChallengeButton.addEventListener('click', () => {
-			const challengeTitle = challengeTitleInput.value;
-			const challengeOptions = challengeOptionsInput.value;
 
-			// Save the challenge title and options in localStorage
-			localStorage.setItem('challengeTitle', challengeTitle);
-			localStorage.setItem('challengeOptions', challengeOptions);
+			const challenge = {
+				creator: username,
+				startingColor: document.getElementById('startingColor').value,
+				gameType: document.getElementById('gameType').value
+			};
+			socket.send(JSON.stringify({ challenge }));
 
-			// Populate the challenge title and options if they exist in localStorage
-			challengeTitleInput.value = localStorage.getItem('challengeTitle') || '';
-			challengeOptionsInput.value = localStorage.getItem('challengeOptions') || '';
 
-			if (challengeTitle && challengeOptions) {
-				const challenge = {
-					title: challengeTitle,
-					options: challengeOptions,
-					creator: username
-				};
-				socket.send(JSON.stringify({ type: 'createChallenge', challenge }));
-			}
+
+
+
+			createChallengeButton.remove();
 		});
 
 		// Handle incoming messages
 		socket.onmessage = (event) => {
-			const message = JSON.parse(event.data);
 
-			if (message.type === 'createChallenge') {
+			const message = JSON.parse(event.data);
+			console.log(message);
+			if (message.challenge) {
 				updateChallengeList(message);
+
 			}
 		};
 
@@ -170,14 +186,41 @@
 			challenges.forEach(challenge => {
 				const li = document.createElement('li');
 				li.className = 'challenge-item';
-				li.textContent = `${challenge.title} by ${challenge.creator} - ${challenge.options}`;
-				li.addEventListener('click', () => {
-					window.open('chess.htm?challenge=' + encodeURIComponent(JSON.stringify(challenge)), '_blank');
-				});
-				challengeList.appendChild(li);
+				li.textContent = `${challenge.creator} plays ${challenge.startingColor}`;
+				if (challenge.type === 'accepted') {
+			challenge.username = username;
+					window.open('chess.htm?challenge=' + encodeURIComponent(btoa(JSON.stringify(challenge))), '_self');
+				} else {
+
+					li.addEventListener('click', () => {
+						handleAcceptChallenge(challenge);
+					});
+					challengeList.appendChild(li);
+				}
 			});
 		}
-		
+
+		// Handle accepting a challenge
+		function handleAcceptChallenge(challenge) {
+			console.log(challenge);
+			challenge.username = username;
+			if (challenge.creator === username) {
+				alert('You cannot accept your own challenge.');
+			} else {
+				challenge.acceptor = username;
+				challenge.type = 'accepted';
+				socket.send(JSON.stringify({challenge}));
+				socket.onmessage = (event) => {
+					const response = JSON.parse(event.data);
+					if (response.challenge.type==="accepted" ) {
+						window.open('chess.htm?challenge=' + encodeURIComponent(btoa(JSON.stringify(challenge))), '_self');
+						socket.onmessage = null;
+					}
+				};
+
+			}
+		}
+
 		// update all inputs with localStorage vals when the page loads
 		window.addEventListener('load', () => {
 			const inputs = document.querySelectorAll('input');

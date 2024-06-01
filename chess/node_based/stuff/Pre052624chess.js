@@ -25,14 +25,7 @@ function chessGame(game) {
 			// Update the chess board with the incoming move
 			// This function should update the UI based on the move received
 			console.log('Move received:', move);
-			if (move.color === game.turn) {
-
-				// Apply the move received from WebSocket
-				const fromSquare = document.getElementById(move.from);
-				const toSquare = document.getElementById(move.to);
-				movePieceWebSocket(fromSquare, toSquare);
-			}
-
+			// Example: updateBoard(move);
 		}
 		return socket;
 	}
@@ -164,33 +157,20 @@ function chessGame(game) {
 			});
 		} else {
 			movePatterns[pieceType].forEach(move => {
-				if (pieceType === 'king' || pieceType === 'knight') {
-					// Handle king and knight moves without scaling
-					const newSquareID = computeNewSquareID(currentSquareID, move);
-					if (newSquareID) {
-						const newSquare = document.getElementById(newSquareID);
-						if (!isSquareOccupied(newSquare) || isSquareOccupiedByOpponent(newSquare, pieceColor)) {
+				for (let i = 1; i < 8; i++) {
+					const scaledMove = [move[0] * i, move[1] * i];
+					const newSquareID = computeNewSquareID(currentSquareID, scaledMove);
+					if (!newSquareID) break;
+					const newSquare = document.getElementById(newSquareID);
+					if (isSquareOccupied(newSquare)) {
+						if (isSquareOccupiedByOpponent(newSquare, pieceColor)) {
 							legalSquares.push(newSquare);
 						}
+						break;
 					}
-				} else {
-					// Handle sliding pieces (rook, bishop, queen)
-					for (let i = 1; i < 8; i++) {
-						const scaledMove = [move[0] * i, move[1] * i];
-						const newSquareID = computeNewSquareID(currentSquareID, scaledMove);
-						if (!newSquareID) break;
-						const newSquare = document.getElementById(newSquareID);
-						if (isSquareOccupied(newSquare)) {
-							if (isSquareOccupiedByOpponent(newSquare, pieceColor)) {
-								legalSquares.push(newSquare);
-							}
-							break;
-						}
-						legalSquares.push(newSquare);
-					}
+					legalSquares.push(newSquare);
 				}
 			});
-
 		}
 
 		return legalSquares;
@@ -241,52 +221,30 @@ function chessGame(game) {
 		const movingPiece = selectedSquare.querySelector("[data-piece]");
 		targetSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
-
-
-		// Send the move via WebSocket if user-controlled
-		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN && game.turn !== webSocketColor) {
-			game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id, color: game.turn }));
-		}
-
-
 		swapMoves();
-		game.timer.startTimer();
-	}
 
-	/**
-	 * Moves a piece to a new square for WebSocket-controlled moves.
-	 * @param {HTMLElement} fromSquare - The square the piece is moving from.
-	 * @param {HTMLElement} toSquare - The square the piece is moving to.
-	 */
-	function movePieceWebSocket(fromSquare, toSquare) {
-		//this function could be better combined with movePiece
-		clearHighlights();
-		const capturedPiece = toSquare.querySelector(".piece");
-		if (capturedPiece) {
-			capturedPiece.classList.remove("piece");
-			capturedPiece.classList.add("captured");
-			const removedContainer = capturedPiece.dataset.color === 'white' ? capturedWhitePieces : capturedBlackPieces;
-			removedContainer.append(capturedPiece);
+
+		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN) {
+
+			game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id }));
+
+
 		}
-
-		const movingPiece = fromSquare.querySelector("[data-piece]");
-		toSquare.append(movingPiece);
-		movingPiece.classList.add("lastmove");
-		swapMoves();
 		game.timer.startTimer();
-	}
 
+
+	}
 	function setWhiteBlack() {
 
 		if (game.turn === 'white') {
 			capturedWhitePieces.prepend(divTurnIcon);
-			capturedWhitePieces.classList.add('selected');
-			capturedBlackPieces.classList.remove('selected');
+			capturedWhitePieces.style.backgroundColor = 'yellow';
+			capturedBlackPieces.style.backgroundColor = '';
 
 		} else {
 			capturedBlackPieces.prepend(divTurnIcon);
-			capturedBlackPieces.classList.add('selected');
-			capturedWhitePieces.classList.remove('selected');
+			capturedBlackPieces.style.backgroundColor = 'yellow';
+			capturedWhitePieces.style.backgroundColor = '';
 
 		}
 	}
@@ -301,37 +259,12 @@ function chessGame(game) {
 	 * Handles the click event on a piece to show legal moves.
 	 * @param {Event} e - The click event.
 	 */
-	// function selectPiece(e) {
-	// 	const piece = e.target;
-	// 	const square = piece.parentNode;
-
-	// 	// Check if it's the current player's turn
-	// 	if (game.turn !== piece.dataset.color) {
-	// 		return;
-	// 	}
-	// 	clearHighlights();
-
-	// 	if (square.classList.contains("selected")) {
-	// 		square.classList.remove("selected");
-	// 	} else {
-	// 		square.classList.add("selected");
-	// 		const legalSquares = getLegalMoves(piece);
-	// 		legalSquares.forEach(square => {
-	// 			square.classList.add("legalSquares");
-	// 			square.addEventListener("click", movePiece);
-	// 		});
-	// 	}
-	// }
-	function isUserTurn(pieceColor) {
-		return game.turn === pieceColor && pieceColor === userColor;
-	}
 	function selectPiece(e) {
-
 		const piece = e.target;
 		const square = piece.parentNode;
 
-		// Check if it's the current player's turn and controlled by the user
-		if (!isUserTurn(piece.dataset.color)) {
+		// Check if it's the current player's turn
+		if (game.turn !== piece.dataset.color) {
 			return;
 		}
 		clearHighlights();
@@ -399,33 +332,11 @@ function chessGame(game) {
 			pieceDiv.addEventListener("click", selectPiece);
 			square.append(pieceDiv);
 		});
+		//this is wrong. we do want to flip at start sometimes but not for this reason
+		// if (game.turn === 'black') {
+		// 	flipBoard();
+		// }
 		setWhiteBlack();
-		if (game.creator.name === game.username) {
-			game.currentUser = game.creator;
-		} else if (game.acceptor.name === game.username) {
-			game.currentUser = game.acceptor;
-		}
-		// alert('this is wrong. username is the same for both players currently.')
-
-
-		// Determines which player is controlled by the user and which by WebSocket
-
-		if ("black" === game.currentUser.color) {
-			// if (webSocketColor !== game.currentUser.color) {
-			flipBoard();
-
-			// Determines which player is controlled by the user and which by WebSocket
-			userColor = 'black';
-			webSocketColor = 'white';
-
-		}
-
-
-
-
-
-
-
 	}
 
 	function flipBoard() {
@@ -513,30 +424,10 @@ function chessGame(game) {
 	capturedBlackPieces.id = "capturedBlackPieces";
 	capturedBlackPieces.classList.add("captured-pieces-container");
 
+	capturedBlackPieces.textContent = "Black";
+	capturedWhitePieces.textContent = "White";
 
-	capturedBlackPieces.textContent = "black";
-	capturedWhitePieces.textContent = "white";
 
-	if (game.creator) {
-		const startingColor = game.startingColor === 'random' ? Math.random() < 0.5 ? 'white' : 'black' : game.startingColor;
-		game.creator = {
-			name: game.creator,
-			color: startingColor
-		};
-		game.acceptor = {
-			name: game.acceptor,
-			color: startingColor === 'white' ? 'black' : 'white'
-		};
-
-		if (game.creator.color == 'black') {
-			capturedWhitePieces.textContent = game.acceptor.name;
-			capturedBlackPieces.textContent = game.creator.name;
-
-		} else {
-			capturedWhitePieces.textContent = game.creator.name;
-			capturedBlackPieces.textContent = game.acceptor.name;
-		}
-	}
 
 	const divTurnIcon = document.createElement("div");
 	divTurnIcon.id = "turnIcon";
@@ -620,8 +511,6 @@ function chessGame(game) {
 
 	// Initialize the pieces on the board
 
-	let userColor = 'white';
-	let webSocketColor = 'black';
 	initializePieces(game);
 	// Reposition the removed pieces containers
 	return game;
