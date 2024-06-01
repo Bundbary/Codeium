@@ -250,7 +250,7 @@ function chessGame(game) {
 
 
 		swapMoves();
-		game.timer.startTimer();
+		timer.startTimer();
 	}
 
 	/**
@@ -273,7 +273,7 @@ function chessGame(game) {
 		toSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
 		swapMoves();
-		game.timer.startTimer();
+		timer.startTimer();
 	}
 
 	function setWhiteBlack() {
@@ -576,37 +576,35 @@ function chessGame(game) {
 		let timerBlackSeconds = 600; // 10 minutes in seconds
 		let bonusSeconds = 12;
 
-		function updateTimer() {
 
-			if (game.turn === "white") {
-				timerWhiteSeconds--;
-				if (timerWhiteSeconds < 0) {
-					clearInterval(window.nChessInterval);
-				} else {
-					updateTimerDisplay(timerWhite, timerWhiteSeconds);
-				}
-			} else {
-				timerBlackSeconds--;
-				if (timerBlackSeconds < 0) {
-					clearInterval(window.nChessInterval);
-				} else {
-					updateTimerDisplay(timerBlack, timerBlackSeconds);
-				}
-			}
-		}
+
+		let nChessInterval = null;
 
 		function startTimer() {
-			if (game.turn === "white") {
-				timerWhiteSeconds += bonusSeconds;
-			} else {
-				timerBlackSeconds += bonusSeconds;
-			}
-			updateTimer()
-			if (!window.nChessInterval) {
-				window.nChessInterval = setInterval(updateTimer, 1000);
+			function updateTimer() {
+				console.log('timerWhiteSeconds', timerWhiteSeconds, 'timerBlackSeconds', timerBlackSeconds);
+				if (game.turn === "white") {
+					timerWhiteSeconds--;
+					if (timerWhiteSeconds < 0) {
+						clearInterval(nChessInterval);
+						alert('cleared white timer');
+					} else {
+						updateTimerDisplay(timerWhite, timerWhiteSeconds);
+					}
+				} else {
+					timerBlackSeconds--;
+					if (timerBlackSeconds < 0) {
+						clearInterval(nChessInterval);
+						alert('cleared black timer');
+					} else {
+						updateTimerDisplay(timerBlack, timerBlackSeconds);
+					}
+				}
 			}
 
-
+			if (!nChessInterval) {
+				nChessInterval = setInterval(updateTimer, 1000);
+			}
 		}
 		updateTimerDisplay(timerWhite, timerWhiteSeconds);
 		updateTimerDisplay(timerBlack, timerBlackSeconds);
@@ -614,10 +612,10 @@ function chessGame(game) {
 
 	}
 
-	game.timer = initializeTimers();
+	let timer = initializeTimers();
 
 	game.webSocket = getWebSocket();
-
+	let nChessInterval = null;
 	// Initialize the pieces on the board
 
 	let userColor = 'white';
