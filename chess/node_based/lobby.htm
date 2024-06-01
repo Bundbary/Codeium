@@ -186,7 +186,10 @@
 			challenges.forEach(challenge => {
 				const li = document.createElement('li');
 				li.className = 'challenge-item';
-				li.textContent = `${challenge.creator} plays ${challenge.startingColor}`;
+				li.textContent = `${challenge.creator} plays ${challenge.startingColor}: ${challenge.gameType}`;
+
+
+
 				if (challenge.type === 'accepted') {
 					challenge.username = username;
 					window.open('chess.htm?challenge=' + encodeURIComponent(btoa(JSON.stringify(challenge))), '_self');

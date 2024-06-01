@@ -24,8 +24,10 @@ function chessGame(game) {
 		function handleIncomingMove(move) {
 			// Update the chess board with the incoming move
 			// This function should update the UI based on the move received
-			console.log('Move received:', move);
 			if (move.color === game.turn) {
+
+				game.timerWhiteSeconds = move.timerWhiteSeconds;
+				game.timerBlackSeconds = move.timerBlackSeconds;
 
 				// Apply the move received from WebSocket
 				const fromSquare = document.getElementById(move.from);
@@ -245,7 +247,14 @@ function chessGame(game) {
 
 		// Send the move via WebSocket if user-controlled
 		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN && game.turn !== webSocketColor) {
-			game.webSocket.send(JSON.stringify({ from: selectedSquare.id, to: targetSquare.id, color: game.turn }));
+			game.webSocket.send(JSON.stringify({
+				from: selectedSquare.id,
+				to: targetSquare.id,
+				color: game.turn,
+				timerWhiteSeconds: game.timerWhiteSeconds,
+				timerBlackSeconds: game.timerBlackSeconds
+
+			}));
 		}
 
 
@@ -493,7 +502,8 @@ function chessGame(game) {
 			{ square: 'h8', name: 'rook', color: 'black' }
 		];
 
-		if (game.randomizePieces) {
+		if (game.gameType === "billy-fischer-random") {
+			alert("need to change this so both players get same randomizatin.");
 			game.pieces = randomizePieces(game.pieces);
 		}
 	}
@@ -582,7 +592,7 @@ function chessGame(game) {
 
 		function startTimer() {
 			function updateTimer() {
-				console.log('timerWhiteSeconds', timerWhiteSeconds, 'timerBlackSeconds', timerBlackSeconds);
+				// console.log('timerWhiteSeconds', timerWhiteSeconds, 'timerBlackSeconds', timerBlackSeconds);
 				if (game.turn === "white") {
 					timerWhiteSeconds--;
 					if (timerWhiteSeconds < 0) {
