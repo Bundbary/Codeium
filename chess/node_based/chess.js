@@ -34,7 +34,13 @@ function chessGame(game) {
 				const toSquare = document.getElementById(move.to);
 				movePieceWebSocket(fromSquare, toSquare);
 			}
-
+				game.kingInCheck = move.kingInCheck;
+				game.squareInCheck = move.squareInCheck;
+			if (game.squareInCheck) {
+				const node=document.getElementById(game.squareInCheck);
+				node.style.backgroundColor = 'red';
+			}
+			console.log(game);
 		}
 		return socket;
 	}
@@ -101,9 +107,8 @@ function chessGame(game) {
 	 * @returns {boolean} True if the square is occupied.
 	 */
 	function isSquareOccupied(square) {
-		return square.querySelector("[data-piece]") !== null;
+		return square.querySelector("[data-piece]");
 	}
-
 	/**
 	 * Checks if a square is occupied by an opponent's piece.
 	 * @param {HTMLElement} square - The square element.
@@ -112,7 +117,7 @@ function chessGame(game) {
 	 */
 	function isSquareOccupiedByOpponent(square, color) {
 		const piece = square.querySelector("[data-piece]");
-		return piece && piece.dataset.color !== color;
+		return piece && piece.dataset.color !== color ? piece : null;
 	}
 
 	/**
@@ -198,6 +203,48 @@ function chessGame(game) {
 		return legalSquares;
 	}
 
+	function checkForCheck() {
+		const allLegalMoves = [].concat(...getAllLegalMoves());
+		for (let i = 0; i < allLegalMoves.length; i++) {
+			const square = allLegalMoves[i];
+			const king = square.querySelector("[data-piece='king']");
+			if (king && king.dataset.color !== game.turn) {
+				king.style.backgroundColor = "red";
+
+				game.kingInCheck = king
+				game.squareInCheck = king.parentNode.id;
+				return king;
+			}
+
+
+		}
+
+
+		return null;
+
+
+
+
+
+
+	}
+
+
+	function getAllLegalMoves() {
+		const pieces = game.board.querySelectorAll(".piece");
+		const allLegalMoves = [];
+
+		pieces.forEach(piece => {
+			const legalSquares = getLegalMoves(piece);
+			allLegalMoves.push(...legalSquares);
+		});
+
+		return allLegalMoves;
+	}
+
+
+
+
 	/**
 	 * Clears all highlights and selected classes from the board.
 	 */
@@ -244,22 +291,37 @@ function chessGame(game) {
 		targetSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
 
-
+		checkForCheck();
 		// Send the move via WebSocket if user-controlled
 		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN && game.turn !== webSocketColor) {
-			game.webSocket.send(JSON.stringify({
+			let fileName = game.creator.name + '_vs_' + game.acceptor.name + '.json';
+			fileName = fileName.replace(/[\\/:*?"<>|]/g, '');
+			const dataToSend = {
+				fileSave: {
+					fileName: "chess_games/" + fileName,
+					flag: 'append'
+				},
 				from: selectedSquare.id,
 				to: targetSquare.id,
 				color: game.turn,
 				timerWhiteSeconds: game.timerWhiteSeconds,
-				timerBlackSeconds: game.timerBlackSeconds
+				timerBlackSeconds: game.timerBlackSeconds,
+				creator: game.creator,
+				acceptor: game.acceptor,
+				turn: game.turn,
+				squareInCheck: game.squareInCheck
 
-			}));
+			}
+			game.webSocket.send(JSON.stringify(dataToSend));
+
 		}
 
 
 		swapMoves();
 		timer.startTimer();
+
+
+
 	}
 
 	/**
@@ -306,31 +368,6 @@ function chessGame(game) {
 		setWhiteBlack();
 	}
 
-	/**
-	 * Handles the click event on a piece to show legal moves.
-	 * @param {Event} e - The click event.
-	 */
-	// function selectPiece(e) {
-	// 	const piece = e.target;
-	// 	const square = piece.parentNode;
-
-	// 	// Check if it's the current player's turn
-	// 	if (game.turn !== piece.dataset.color) {
-	// 		return;
-	// 	}
-	// 	clearHighlights();
-
-	// 	if (square.classList.contains("selected")) {
-	// 		square.classList.remove("selected");
-	// 	} else {
-	// 		square.classList.add("selected");
-	// 		const legalSquares = getLegalMoves(piece);
-	// 		legalSquares.forEach(square => {
-	// 			square.classList.add("legalSquares");
-	// 			square.addEventListener("click", movePiece);
-	// 		});
-	// 	}
-	// }
 	function isUserTurn(pieceColor) {
 		return game.turn === pieceColor && pieceColor === userColor;
 	}
