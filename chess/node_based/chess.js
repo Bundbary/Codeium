@@ -356,23 +356,6 @@ function chessGame(game) {
 			});
 		}
 	}
-	function randomizePieces(array) {
-		function shuffle(a) {
-			for (let i = a.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[a[i], a[j]] = [a[j], a[i]];
-			}
-			return a;;
-		}
-		const shuffled = shuffle(['rook', 'knight', 'bishop', 'queen', 'bishop', 'king', 'knight', 'rook']);
-		const firstRow = array.filter(piece => piece.square.endsWith('1'));
-		const lastRow = array.filter(piece => piece.square.endsWith('8'));
-		for (let i = 0; i < shuffled.length; i++) {
-			firstRow[i].name = shuffled[i];
-			lastRow[i].name = shuffled[i];
-		}
-		return array;
-	}
 	/**
 	 * Adds pieces to the board based on the game state.
 	 * @param {Object} game - The game state object.
@@ -502,10 +485,6 @@ function chessGame(game) {
 			{ square: 'h8', name: 'rook', color: 'black' }
 		];
 
-		if (game.gameType === "billy-fischer-random") {
-			alert("need to change this so both players get same randomizatin.");
-			game.pieces = randomizePieces(game.pieces);
-		}
 	}
 	// game.randomizePieces=game.randomizePieces||randomizePieces(game.pieces);
 
