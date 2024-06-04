@@ -1,8 +1,7 @@
-//START THE SERVER HERE. (base) PS C:\Users\bpenn\ExpectancyLearning\CodeiumTest\node_server> node server.js
-
 function chessGame(game) {
 	function getWebSocket() {
 		const socket = new WebSocket('ws://localhost:3000');
+
 		socket.onopen = function (event) {
 			console.log('Connected to WebSocket server');
 		};
@@ -35,13 +34,7 @@ function chessGame(game) {
 				const toSquare = document.getElementById(move.to);
 				movePieceWebSocket(fromSquare, toSquare);
 			}
-			game.kingInCheck = move.kingInCheck;
-			game.squareInCheck = move.squareInCheck;
-			if (game.squareInCheck) {
-				const node = document.getElementById(game.squareInCheck);
-				node.style.backgroundColor = 'red';
-			}
-			console.log(game);
+
 		}
 		return socket;
 	}
@@ -127,50 +120,6 @@ function chessGame(game) {
 	 * @returns {Array<HTMLElement>} An array of legal square elements.
 	 */
 	function getLegalMoves(piece) {
-		function getEnpassantSquares(squareID, legalSquares) {
-			const file = squareID.charAt(0);
-			const rank = squareID.charAt(1);
-
-			const leftFile = String.fromCharCode(file.charCodeAt(0) - 1);
-			const leftSquareID = leftFile + rank;
-
-			const rightFile = String.fromCharCode(file.charCodeAt(0) + 1);
-			const rightSquareID = rightFile + rank;
-
-
-
-
-			try {
-				const file = squareID.charAt(0);
-				const rank = squareID.charAt(1);
-
-				const leftFile = String.fromCharCode(file.charCodeAt(0) - 1);
-				const leftSquareID = leftFile + rank;
-
-				const rightFile = String.fromCharCode(file.charCodeAt(0) + 1);
-				const rightSquareID = rightFile + rank;
-
-				const leftSquare = document.getElementById(leftSquareID);
-				const rightSquare = document.getElementById(rightSquareID);
-				if (leftSquare) {
-
-					if (leftSquare.hasAttribute('enpassant') && leftSquare.querySelector(`[data-color!=${pieceColor}]`)) {
-						legalSquares.push(leftSquare);
-					}
-				}
-
-				if (rightSquare) {
-					if (rightSquare.hasAttribute('enpassant') && rightSquare.querySelector(`[data-color!=${pieceColor}]`)) {
-						legalSquares.push(rightSquare);
-					}
-				}
-
-			} catch (error) {
-				debugger;
-			}
-
-
-		}
 		const legalSquares = [];
 		const currentSquare = piece.parentNode;
 		const pieceColor = piece.dataset.color;
@@ -190,11 +139,6 @@ function chessGame(game) {
 
 		// Determine legal moves for the piece
 		if (pieceType === 'pawn') {
-
-
-			const existingEnpassant = document.querySelectorAll(`[data-enpassant`);
-
-
 			const { straight, diagonal } = movePatterns.pawn;
 			if (currentSquareID.charAt(1) !== '2' && currentSquareID.charAt(1) !== '7') {
 				straight.pop();
@@ -205,13 +149,6 @@ function chessGame(game) {
 				if (newSquareID) {
 					const newSquare = document.getElementById(newSquareID);
 					if (!isSquareOccupied(newSquare)) {
-						const newRow = Number(newSquareID.charAt(1));
-						const currentRow = Number(currentSquareID.charAt(1));
-						if (existingEnpassant.length<1 && pieceColor === game.turn && Math.abs(newRow - currentRow) === 2 && currentSquareID.charAt(0) === newSquareID.charAt(0)) {
-							newSquare.dataset.enpassant = game.turn;
-
-							console.log(piece);
-						}
 						legalSquares.push(newSquare);
 					}
 				}
@@ -226,11 +163,6 @@ function chessGame(game) {
 					}
 				}
 			});
-
-			getEnpassantSquares(currentSquareID, legalSquares);
-
-
-
 		} else {
 			movePatterns[pieceType].forEach(move => {
 				if (pieceType === 'king' || pieceType === 'knight') {
@@ -259,30 +191,20 @@ function chessGame(game) {
 					}
 				}
 			});
-
 		}
 
 		return legalSquares;
 	}
 
 	function checkForCheck() {
-		const allLegalMoves = [].concat(...getAllLegalMoves());
-		for (let i = 0; i < allLegalMoves.length; i++) {
-			const square = allLegalMoves[i];
-			const king = square.querySelector("[data-piece='king']");
-			if (king && king.dataset.color !== game.turn) {
-				king.style.backgroundColor = "red";
 
-				game.kingInCheck = king
-				game.squareInCheck = king.parentNode.id;
-				return king;
-			}
+		const allLegalMoves = [].concat(...allLegalMoves);
 
 
-		}
 
+		console.log(allLegalMoves);
 
-		return null;
+		return allLegalMoves;
 
 
 
@@ -337,7 +259,6 @@ function chessGame(game) {
 		if (!targetSquare.classList.contains("square")) {
 			targetSquare = targetSquare.parentNode;
 		}
-
 		const selectedSquare = game.board.querySelector(".selected");
 		clearHighlights();
 
@@ -353,7 +274,6 @@ function chessGame(game) {
 		targetSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
 
-		checkForCheck();
 		// Send the move via WebSocket if user-controlled
 		if (game.webSocket && game.webSocket.readyState === WebSocket.OPEN && game.turn !== webSocketColor) {
 			let fileName = game.creator.name + '_vs_' + game.acceptor.name + '.json';
@@ -370,18 +290,16 @@ function chessGame(game) {
 				timerBlackSeconds: game.timerBlackSeconds,
 				creator: game.creator,
 				acceptor: game.acceptor,
-				turn: game.turn,
-				squareInCheck: game.squareInCheck
+				turn: game.turn
 
 			}
 			game.webSocket.send(JSON.stringify(dataToSend));
 
 		}
 
-
 		swapMoves();
 		timer.startTimer();
-
+		checkForCheck();
 
 
 	}
@@ -449,9 +367,9 @@ function chessGame(game) {
 		} else {
 			square.classList.add("selected");
 			const legalSquares = getLegalMoves(piece);
-			legalSquares.forEach(square => {
-				square.classList.add("legalSquares");
-				square.addEventListener("click", movePiece);
+			legalSquares.forEach(o => {
+				o.square.classList.add("legalSquares");
+				o.square.addEventListener("click", movePiece);
 			});
 		}
 	}

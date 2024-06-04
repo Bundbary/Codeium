@@ -1,4 +1,6 @@
 // Import necessary modules
+//START THE SERVER HERE. (base) PS C:\Users\bpenn\ExpectancyLearning\CodeiumTest\node_server> node server.js
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
