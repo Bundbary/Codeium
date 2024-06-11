@@ -18,6 +18,7 @@ function chessGame(game) {
 		};
 
 		socket.onerror = function (error) {
+			document.body.innerHTML = '<h1>Server not available: 🍋🍋🍋</h1>';
 			console.error('WebSocket error:', error);
 		};
 
@@ -207,7 +208,7 @@ function chessGame(game) {
 					if (!isSquareOccupied(newSquare)) {
 						const newRow = Number(newSquareID.charAt(1));
 						const currentRow = Number(currentSquareID.charAt(1));
-						if (existingEnpassant.length<1 && pieceColor === game.turn && Math.abs(newRow - currentRow) === 2 && currentSquareID.charAt(0) === newSquareID.charAt(0)) {
+						if (existingEnpassant.length < 1 && pieceColor === game.turn && Math.abs(newRow - currentRow) === 2 && currentSquareID.charAt(0) === newSquareID.charAt(0)) {
 							newSquare.dataset.enpassant = game.turn;
 
 							console.log(piece);

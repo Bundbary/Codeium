@@ -1,10 +1,9 @@
 // Import necessary modules
+//START THE SERVER HERE. cd C:\Users\bpenn\ExpectancyLearning\CodeiumTest\node_server> node server.js
+
 const express = require('express');
 const http = require('http');
-const https = require('https');
 const WebSocket = require('ws');
-const fs = require('fs');
-const path = require('path');
 
 // Create an Express application
 const app = express();
@@ -12,36 +11,15 @@ const app = express();
 // Serve static files from the "public" directory
 app.use(express.static('public'));
 
-// Variables to determine if SSL is enabled
-const useSSL = process.env.USE_SSL || false; // Set this environment variable if running in a secure context
+// Create an HTTP server
+const server = http.createServer(app);
 
-let server;
-
-if (useSSL) {
-  // SSL options
-  const privateKey = fs.readFileSync('/path/to/private/key.pem', 'utf8');
-  const certificate = fs.readFileSync('/path/to/certificate.pem', 'utf8');
-  const ca = fs.readFileSync('/path/to/ca_bundle.pem', 'utf8');
-
-  const credentials = {
-    key: privateKey,
-    cert: certificate,
-    ca: ca
-  };
-
-  // Create an HTTPS server
-  server = https.createServer(credentials, app);
-  console.log('Using HTTPS for secure connection');
-} else {
-  // Create an HTTP server
-  server = http.createServer(app);
-  console.log('Using HTTP for connection');
-}
-
-// Create a WebSocket server and attach it to the HTTP/HTTPS server
+// Create a WebSocket server and attach it to the HTTP server
 const wss = new WebSocket.Server({ server });
 
 const clients = {};
+
+
 
 const generateUniqueId = () => {
   return 'client_' + Math.random().toString(36).substr(2, 9);
@@ -51,6 +29,7 @@ const generateUniqueId = () => {
 function broadcast(data) {
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
+      // console.log(data);
       client.send(JSON.stringify(data));
     }
   });
@@ -60,23 +39,30 @@ function broadcast(data) {
 wss.on('connection', ws => {
   console.log('New client connected');
 
+
+
   ws.on('message', message => {
     console.log(`Received message: ${message}`);
 
     if (message.username) {
       ws.send('pong');
+      
       return;
     }
+
 
     // Parse the incoming message as JSON
     const data = JSON.parse(message);
     const fileSave = data.fileSave;
     if (fileSave) {
+
       const fileName = fileSave.fileName;
       const fileContent = message + "\n\n";
 
       // Ensure the directory exists
+      const path = require('path');
       const dir = path.dirname(fileName);
+      const fs = require('fs');
       fs.mkdir(dir, { recursive: true }, (err) => {
         if (err) {
           console.error(`Failed to create directory: ${err}`);
@@ -107,7 +93,8 @@ wss.on('connection', ws => {
         });
       });
     } else if (data.getGames) {
-      fs.readdir(path.join(__dirname, 'chess_games'), (err, files) => {
+      const fs = require('fs');
+      fs.readdir('./chess_games', (err, files) => {
         if (err) {
           console.error(`Failed to read directory: ${err}`);
           return;
@@ -116,13 +103,15 @@ wss.on('connection', ws => {
         data.games = jsonFiles;
 
         broadcast(data);
+
+
       });
       return;
+
     }
     // Broadcast the received message to all connected clients
     broadcast(data);
   });
-
   // Set up close event
   ws.on('close', () => {
     console.log('Client disconnected');

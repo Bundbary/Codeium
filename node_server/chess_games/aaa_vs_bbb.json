@@ -1,0 +1,4 @@
+{"fileSave":{"fileName":"chess_games/aaa_vs_bbb.json","flag":"append"},"from":"e7","to":"e5","color":"black","creator":{"name":"aaa","color":"white"},"acceptor":{"name":"bbb","color":"black"},"turn":"black"}
+
+{"fileSave":{"fileName":"chess_games/aaa_vs_bbb.json","flag":"append"},"from":"e2","to":"e4","color":"white","creator":{"name":"aaa","color":"white"},"acceptor":{"name":"bbb","color":"black"},"turn":"white"}
+
