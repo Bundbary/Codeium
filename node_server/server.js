@@ -13,20 +13,19 @@ const app = express();
 app.use(express.static('public'));
 
 // Variables to determine if SSL is enabled
-const useSSL = process.env.USE_SSL || false; // Set this environment variable if running in a secure context
-
+const useSSL = process.env.HOME === '/home/chameleon';
 let server;
 
 if (useSSL) {
   // SSL options
-  const privateKey = fs.readFileSync('/path/to/private/key.pem', 'utf8');
-  const certificate = fs.readFileSync('/path/to/certificate.pem', 'utf8');
-  const ca = fs.readFileSync('/path/to/ca_bundle.pem', 'utf8');
+  const privateKey = fs.readFileSync('/home/chameleon/ssl/keys/ba499_0f8eb_ced19026803c0f17e1d5303a13bc8efb.key', 'utf8');
+  const certificate = fs.readFileSync('/home/chameleon/ssl/certs/chameleon_sdiclarity_com_ba499_0f8eb_1723420799_bd79a33f5774aea95a6bdba33f5c4f9c.crt', 'utf8');
+  const ca = fs.readFileSync('/home/chameleon/ssl/certs/chameleon_sdiclarity_com_ba499_0f8eb_1723420799_bd79a33f5774aea95a6bdba33f5c4f9c.crt.cache', 'utf8');
 
   const credentials = {
     key: privateKey,
     cert: certificate,
-    ca: ca
+     ca: ca
   };
 
   // Create an HTTPS server

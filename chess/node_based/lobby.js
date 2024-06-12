@@ -1,10 +1,14 @@
 // WebSocket setup
 
 let wslocation = 'ws://localhost:3000';
+if(!document.URL.includes('localhost')){
+	wslocation = 'wss://chameleon.sdiclarity.com:3000';	
+	
+}
 
 
 const socket = new WebSocket(wslocation);
-
+console.log("foo");
 
 
 
