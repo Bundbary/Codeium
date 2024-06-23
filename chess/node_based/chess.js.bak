@@ -21,28 +21,57 @@ function chessGame(game) {
 			document.body.innerHTML = '<h1>Server not available: 🍋🍋🍋</h1>';
 			console.error('WebSocket error:', error);
 		};
+		function markEnpassant() {
+			const nodes = document.getElementsByClassName("enpassant");
+			while (nodes.length > 0) {
+				nodes[0].classList.remove("enpassant");
+			}
+			const nodeSquare = document.getElementById(game.enemyEnpassantID);
+			if (nodeSquare) {
+				nodeSquare.classList.add("enpassant");
+			}
 
+		}
 
 		function handleIncomingMove(move) {
 			// Update the chess board with the incoming move
 			// This function should update the UI based on the move received
 			if (move.color === game.turn) {
 
+				if (move.capturedEnpassant) {
+					capturePiece(document.querySelector(`.lastmove`));
+				}
+
+
+
+				game.enemyEnpassantID = move.enpassantID;
 				game.timerWhiteSeconds = move.timerWhiteSeconds;
 				game.timerBlackSeconds = move.timerBlackSeconds;
-
+				markEnpassant();
 				// Apply the move received from WebSocket
 				const fromSquare = document.getElementById(move.from);
 				const toSquare = document.getElementById(move.to);
+
 				movePieceWebSocket(fromSquare, toSquare);
 			}
 			game.kingInCheck = move.kingInCheck;
 			game.squareInCheck = move.squareInCheck;
+
+
+			const check = game.board.querySelectorAll(".check");
+			check.forEach(square => {
+				square.classList.remove("check");
+			});
+
+
 			if (game.squareInCheck) {
 				const node = document.getElementById(game.squareInCheck);
-				node.style.backgroundColor = 'red';
+				node.classList.add('check');
+
+				// node.style.backgroundColor = 'red';
 			}
-			console.log(game);
+
+
 		}
 		return socket;
 	}
@@ -127,48 +156,48 @@ function chessGame(game) {
 	 * @param {HTMLElement} piece - The piece element.
 	 * @returns {Array<HTMLElement>} An array of legal square elements.
 	 */
-	function getLegalMoves(piece) {
-		function getEnpassantSquares(squareID, legalSquares) {
-			const file = squareID.charAt(0);
-			const rank = squareID.charAt(1);
-
-			const leftFile = String.fromCharCode(file.charCodeAt(0) - 1);
-			const leftSquareID = leftFile + rank;
-
-			const rightFile = String.fromCharCode(file.charCodeAt(0) + 1);
-			const rightSquareID = rightFile + rank;
-
-
-
+	function getLegalMoves(piece, includeEnpassant = false) {
+		function addEnpassantSquares(squareID) {
 
 			try {
-				const file = squareID.charAt(0);
-				const rank = squareID.charAt(1);
+				if (game.enemyEnpassantID) {
+					const file = squareID.charAt(0);
+					const rank = squareID.charAt(1);
 
-				const leftFile = String.fromCharCode(file.charCodeAt(0) - 1);
-				const leftSquareID = leftFile + rank;
+					const leftFile = String.fromCharCode(file.charCodeAt(0) - 1);
+					const leftSquareID = leftFile + rank;
+					const rightFile = String.fromCharCode(file.charCodeAt(0) + 1);
+					const rightSquareID = rightFile + rank;
+					let squareToPush;
 
-				const rightFile = String.fromCharCode(file.charCodeAt(0) + 1);
-				const rightSquareID = rightFile + rank;
 
-				const leftSquare = document.getElementById(leftSquareID);
-				const rightSquare = document.getElementById(rightSquareID);
-				if (leftSquare) {
 
-					if (leftSquare.hasAttribute('enpassant') && leftSquare.querySelector(`[data-color!=${pieceColor}]`)) {
-						legalSquares.push(leftSquare);
+
+					if (game.enemyEnpassantID === leftSquareID) {
+						if (game.turn === "black") {
+							squareToPush = document.getElementById(leftFile + (Number(rank) - 1));
+						} else {
+							squareToPush = document.getElementById(leftFile + (Number(rank) + 1));
+						}
+
+					} else if (game.enemyEnpassantID === rightSquareID) {
+						if (game.turn === "black") {
+							squareToPush = document.getElementById(rightFile + (Number(rank) - 1));
+						} else {
+							squareToPush = document.getElementById(rightFile + (Number(rank) + 1));
+						}
 					}
-				}
-
-				if (rightSquare) {
-					if (rightSquare.hasAttribute('enpassant') && rightSquare.querySelector(`[data-color!=${pieceColor}]`)) {
-						legalSquares.push(rightSquare);
+					if (squareToPush) {
+						legalSquares.push(squareToPush);
+						document.querySelector(".enpassant").classList.add("enpassantInCheck");
 					}
-				}
 
+				}
 			} catch (error) {
 				debugger;
 			}
+
+
 
 
 		}
@@ -193,7 +222,6 @@ function chessGame(game) {
 		if (pieceType === 'pawn') {
 
 
-			const existingEnpassant = document.querySelectorAll(`[data-enpassant`);
 
 
 			const { straight, diagonal } = movePatterns.pawn;
@@ -208,10 +236,10 @@ function chessGame(game) {
 					if (!isSquareOccupied(newSquare)) {
 						const newRow = Number(newSquareID.charAt(1));
 						const currentRow = Number(currentSquareID.charAt(1));
-						if (existingEnpassant.length < 1 && pieceColor === game.turn && Math.abs(newRow - currentRow) === 2 && currentSquareID.charAt(0) === newSquareID.charAt(0)) {
-							newSquare.dataset.enpassant = game.turn;
 
-							console.log(piece);
+						if (includeEnpassant && Math.abs(newRow - currentRow) === 2 && currentSquareID.charAt(0) === newSquareID.charAt(0)) {
+							game.enpassantID = newSquareID;
+
 						}
 						legalSquares.push(newSquare);
 					}
@@ -227,8 +255,9 @@ function chessGame(game) {
 					}
 				}
 			});
-
-			getEnpassantSquares(currentSquareID, legalSquares);
+			if (includeEnpassant) {
+				addEnpassantSquares(currentSquareID);
+			}
 
 
 
@@ -267,12 +296,25 @@ function chessGame(game) {
 	}
 
 	function checkForCheck() {
+
+
+
+		const check = game.board.querySelectorAll(".check");
+		check.forEach(square => {
+			square.classList.remove("check");
+		});
+		game.squareInCheck = null;
+
+
+
 		const allLegalMoves = [].concat(...getAllLegalMoves());
 		for (let i = 0; i < allLegalMoves.length; i++) {
 			const square = allLegalMoves[i];
 			const king = square.querySelector("[data-piece='king']");
 			if (king && king.dataset.color !== game.turn) {
-				king.style.backgroundColor = "red";
+				// king.style.backgroundColor = "red";
+
+				king.classList.add('check');
 
 				game.kingInCheck = king
 				game.squareInCheck = king.parentNode.id;
@@ -312,42 +354,97 @@ function chessGame(game) {
 	 * Clears all highlights and selected classes from the board.
 	 */
 	function clearHighlights() {
-		const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
-		legalSquaresSquares.forEach(square => {
-			square.classList.remove("legalSquares");
-			square.removeEventListener("click", movePiece);
+
+		const classesToRemove = ["selected", "legalSquares", "lastmove", "enpassantInCheck"];
+
+		classesToRemove.forEach(className => {
+			const elements = game.board.querySelectorAll(`.${className}`);
+			elements.forEach(element => {
+				element.classList.remove(className);
+			});
 		});
 
-		const selectedPieces = game.board.querySelectorAll(".selected");
-		selectedPieces.forEach(square => {
-			square.classList.remove("selected");
-		});
 
-		const lastMovedPieces = game.board.querySelectorAll(".lastmove");
-		lastMovedPieces.forEach(square => {
-			square.classList.remove("lastmove");
-		});
+
+
+		// const enpassantInCheck = game.board.querySelectorAll(".enpassantInCheck");
+		// enpassantInCheck.forEach(square => {
+		// 	square.classList.remove("enpassantInCheck");
+		// });
+
+
+
+
+		// const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
+		// legalSquaresSquares.forEach(square => {
+		// 	square.classList.remove("legalSquares");
+		// 	square.removeEventListener("click", movePiece);
+		// });
+
+		// const selectedPieces = game.board.querySelectorAll(".selected");
+		// selectedPieces.forEach(square => {
+		// 	square.classList.remove("selected");
+		// });
+
+		// const lastMovedPieces = game.board.querySelectorAll(".lastmove");
+		// lastMovedPieces.forEach(square => {
+		// 	square.classList.remove("lastmove");
+		// });
 	}
 
 	/**
 	 * Moves a piece to a new square.
 	 * @param {Event} e - The click event.
 	 */
-	function movePiece(e) {
-		let targetSquare = e.target;
-		if (!targetSquare.classList.contains("square")) {
-			targetSquare = targetSquare.parentNode;
-		}
+	function capturePiece(capturedPiece) {
 
-		const selectedSquare = game.board.querySelector(".selected");
-		clearHighlights();
-
-		const capturedPiece = targetSquare.querySelector(".piece");
 		if (capturedPiece) {
+			console.log(capturedPiece);
 			capturedPiece.classList.remove("piece");
 			capturedPiece.classList.add("captured");
 			const removedContainer = capturedPiece.dataset.color === 'white' ? capturedWhitePieces : capturedBlackPieces;
 			removedContainer.append(capturedPiece);
+		} else {
+			debugger;
+		}
+	}
+	function movePiece(e) {
+		let targetSquare = e.target;
+
+
+
+
+		if (!targetSquare.classList.contains("square")) {
+			targetSquare = targetSquare.parentNode;
+		}
+
+
+		let capturedPiece = targetSquare.querySelector(".piece");
+
+
+
+		if (capturedPiece && targetSquare.classList.contains("selected")) {
+			return;
+		}
+
+
+
+
+		const enpassantPiece = game.board.querySelector(".enpassantInCheck");
+		if (enpassantPiece) {
+			capturedPiece = enpassantPiece.querySelector(".piece");
+			game.board.querySelector(".enpassant").classList.remove("enpassant");
+			game.capturedEnpassant = enpassantPiece.id;
+		}
+		const selectedSquare = game.board.querySelector(".selected");
+		clearHighlights();
+
+
+
+
+
+		if (capturedPiece) {
+			capturePiece(capturedPiece);
 		}
 
 		const movingPiece = selectedSquare.querySelector("[data-piece]");
@@ -372,7 +469,10 @@ function chessGame(game) {
 				creator: game.creator,
 				acceptor: game.acceptor,
 				turn: game.turn,
-				squareInCheck: game.squareInCheck
+				enpassantID: game.enpassantID,
+				squareInCheck: game.squareInCheck,
+
+				capturedEnpassant: game.capturedEnpassant
 
 			}
 			game.webSocket.send(JSON.stringify(dataToSend));
@@ -435,8 +535,16 @@ function chessGame(game) {
 		return game.turn === pieceColor && pieceColor === userColor;
 	}
 	function selectPiece(e) {
+		game.enpassantID = null;
+
+
 
 		const piece = e.target;
+
+
+
+
+
 		const square = piece.parentNode;
 
 		// Check if it's the current player's turn and controlled by the user
@@ -449,7 +557,9 @@ function chessGame(game) {
 			square.classList.remove("selected");
 		} else {
 			square.classList.add("selected");
-			const legalSquares = getLegalMoves(piece);
+			const legalSquares = getLegalMoves(piece, true);
+
+
 			legalSquares.forEach(square => {
 				square.classList.add("legalSquares");
 				square.addEventListener("click", movePiece);

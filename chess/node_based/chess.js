@@ -56,9 +56,26 @@ function chessGame(game) {
 			}
 			game.kingInCheck = move.kingInCheck;
 			game.squareInCheck = move.squareInCheck;
+
+
+			const check = game.board.querySelectorAll(".check");
+			check.forEach(square => {
+				square.classList.remove("check");
+			});
+
+
 			if (game.squareInCheck) {
 				const node = document.getElementById(game.squareInCheck);
-				node.style.backgroundColor = 'red';
+				node.classList.add('check');
+
+				// node.style.backgroundColor = 'red';
+			}
+
+
+			if (move.mate) {
+				finishGame(move.mate);
+
+
 			}
 
 
@@ -286,12 +303,25 @@ function chessGame(game) {
 	}
 
 	function checkForCheck() {
+
+
+
+		const check = game.board.querySelectorAll(".check");
+		check.forEach(square => {
+			square.classList.remove("check");
+		});
+		game.squareInCheck = null;
+
+
+
 		const allLegalMoves = [].concat(...getAllLegalMoves());
 		for (let i = 0; i < allLegalMoves.length; i++) {
 			const square = allLegalMoves[i];
 			const king = square.querySelector("[data-piece='king']");
 			if (king && king.dataset.color !== game.turn) {
-				king.style.backgroundColor = "red";
+				// king.style.backgroundColor = "red";
+
+				king.classList.add('check');
 
 				game.kingInCheck = king
 				game.squareInCheck = king.parentNode.id;
@@ -311,7 +341,50 @@ function chessGame(game) {
 
 	}
 
+	function isCheckmate() {
+		// First, check if the king is in check
+		if (!checkForCheck()) {
+			return false;
+		}
 
+		// Get all pieces of the opponent player
+		const opponentColor = game.turn === 'white' ? 'black' : 'white';
+		const opponentPieces = Array.from(game.board.querySelectorAll(`.piece[data-color="${opponentColor}"]`));
+
+		// For each piece, check if it has any legal moves that can get the king out of check
+		for (const piece of opponentPieces) {
+			const legalMoves = getLegalMoves(piece);
+
+			for (const moveSquare of legalMoves) {
+				// Simulate the move
+				const originalSquare = piece.parentNode;
+				const capturedPiece = moveSquare.querySelector('.piece');
+
+				if (capturedPiece) {
+					moveSquare.removeChild(capturedPiece);
+				}
+				moveSquare.appendChild(piece);
+
+				// Check if the king is still in check after this move
+				const stillInCheck = checkForCheck();
+
+				// Undo the move
+				originalSquare.appendChild(piece);
+				if (capturedPiece) {
+					moveSquare.appendChild(capturedPiece);
+				}
+
+				// If this move gets the king out of check, it's not checkmate
+				if (!stillInCheck) {
+					return false;
+				}
+			}
+		}
+
+		// If we've checked all pieces and all moves, and none get the king out of check, it's checkmate
+
+		return opponentColor;
+	}
 	function getAllLegalMoves() {
 		const pieces = game.board.querySelectorAll(".piece");
 		const allLegalMoves = [];
@@ -332,32 +405,41 @@ function chessGame(game) {
 	 */
 	function clearHighlights() {
 
+		const classesToRemove = ["selected", "legalSquares", "lastmove", "enpassantInCheck"];
 
-
-
-		const enpassantInCheck = game.board.querySelectorAll(".enpassantInCheck");
-		enpassantInCheck.forEach(square => {
-			square.classList.remove("enpassantInCheck");
+		classesToRemove.forEach(className => {
+			const elements = game.board.querySelectorAll(`.${className}`);
+			elements.forEach(element => {
+				element.classList.remove(className);
+			});
 		});
 
 
 
 
-		const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
-		legalSquaresSquares.forEach(square => {
-			square.classList.remove("legalSquares");
-			square.removeEventListener("click", movePiece);
-		});
+		// const enpassantInCheck = game.board.querySelectorAll(".enpassantInCheck");
+		// enpassantInCheck.forEach(square => {
+		// 	square.classList.remove("enpassantInCheck");
+		// });
 
-		const selectedPieces = game.board.querySelectorAll(".selected");
-		selectedPieces.forEach(square => {
-			square.classList.remove("selected");
-		});
 
-		const lastMovedPieces = game.board.querySelectorAll(".lastmove");
-		lastMovedPieces.forEach(square => {
-			square.classList.remove("lastmove");
-		});
+
+
+		// const legalSquaresSquares = game.board.querySelectorAll(".legalSquares");
+		// legalSquaresSquares.forEach(square => {
+		// 	square.classList.remove("legalSquares");
+		// 	square.removeEventListener("click", movePiece);
+		// });
+
+		// const selectedPieces = game.board.querySelectorAll(".selected");
+		// selectedPieces.forEach(square => {
+		// 	square.classList.remove("selected");
+		// });
+
+		// const lastMovedPieces = game.board.querySelectorAll(".lastmove");
+		// lastMovedPieces.forEach(square => {
+		// 	square.classList.remove("lastmove");
+		// });
 	}
 
 	/**
@@ -378,12 +460,26 @@ function chessGame(game) {
 	}
 	function movePiece(e) {
 		let targetSquare = e.target;
+
+
+
+
 		if (!targetSquare.classList.contains("square")) {
 			targetSquare = targetSquare.parentNode;
 		}
 
 
 		let capturedPiece = targetSquare.querySelector(".piece");
+
+
+
+		if (capturedPiece && targetSquare.classList.contains("selected")) {
+			return;
+		}
+
+
+
+
 		const enpassantPiece = game.board.querySelector(".enpassantInCheck");
 		if (enpassantPiece) {
 			capturedPiece = enpassantPiece.querySelector(".piece");
@@ -395,6 +491,8 @@ function chessGame(game) {
 
 
 
+
+
 		if (capturedPiece) {
 			capturePiece(capturedPiece);
 		}
@@ -402,6 +500,13 @@ function chessGame(game) {
 		const movingPiece = selectedSquare.querySelector("[data-piece]");
 		targetSquare.append(movingPiece);
 		movingPiece.classList.add("lastmove");
+
+
+		const mate = isCheckmate();
+		if (mate) {
+			finishGame(mate);
+		}
+
 
 		checkForCheck();
 		// Send the move via WebSocket if user-controlled
@@ -423,7 +528,8 @@ function chessGame(game) {
 				turn: game.turn,
 				enpassantID: game.enpassantID,
 				squareInCheck: game.squareInCheck,
-
+				kingInCheck: game.kingInCheck,
+				mate,
 				capturedEnpassant: game.capturedEnpassant
 
 			}
@@ -438,7 +544,25 @@ function chessGame(game) {
 
 
 	}
+	function finishGame(mate) {
+		timer.stopTimer();
+		document.querySelector(".board").classList.add("disabled");
+		// You might want to end the game here or disable further moves
+		if (game.kingInCheck) {
+			console.log(game.kingInCheck);
+			if (mate === 'white') {
+				// alert(`Checkmate! Black wins!`);
+				capturedBlackPieces.innerHTML = ("<div>winner</div>");
+			} else {
+				// alert(`Checkmate! White wins!`);
 
+				capturedWhitePieces.innerHTML = ("<div>winner</div>");
+			}
+		}
+
+		// You might want to end the game here or disable further moves
+
+	}
 	/**
 	 * Moves a piece to a new square for WebSocket-controlled moves.
 	 * @param {HTMLElement} fromSquare - The square the piece is moving from.
@@ -492,6 +616,11 @@ function chessGame(game) {
 
 
 		const piece = e.target;
+
+
+
+
+
 		const square = piece.parentNode;
 
 		// Check if it's the current player's turn and controlled by the user
@@ -568,11 +697,6 @@ function chessGame(game) {
 			webSocketColor = 'white';
 
 		}
-
-
-
-
-
 
 
 	}
@@ -723,6 +847,9 @@ function chessGame(game) {
 		let bonusSeconds = 12;
 
 
+		function stopTimer() {
+			clearInterval(timerInterval);
+		}
 
 		let nChessInterval = null;
 
@@ -754,7 +881,7 @@ function chessGame(game) {
 		}
 		updateTimerDisplay(timerWhite, timerWhiteSeconds);
 		updateTimerDisplay(timerBlack, timerBlackSeconds);
-		return { startTimer }
+		return { startTimer, stopTimer }
 
 	}
 
