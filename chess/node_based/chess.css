@@ -57,8 +57,8 @@ body {
 	font-size: calc(min(80vw, 80vh) / 20);
 	margin-right: -2%;
 	margin-top: 1%;
-	
-	
+
+
 }
 
 #capturedBlackPieces {
@@ -152,6 +152,7 @@ body {
 	background-color: rgba(50, 158, 255, 0.6);
 } */
 
+.enpassantInCheck,
 .legalSquares .piece {
 	background: linear-gradient(to bottom right, transparent calc(50% - 1px), #f00 calc(50% - 1px), #f00 calc(50% + 1px), transparent calc(50% + 1px)),
 		linear-gradient(to bottom left, transparent calc(50% - 1px), #f00 calc(50% - 1px), #f00 calc(50% + 1px), transparent calc(50% + 1px));
@@ -159,6 +160,9 @@ body {
 	background-size: 100% 100%;
 }
 
-[data-enpassant] {
-	background-color: cyan;
-}	
+
+
+
+.enpassant {
+	border: 5px solid #f00;
+}

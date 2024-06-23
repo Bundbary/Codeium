@@ -1,7 +1,7 @@
 // WebSocket setup
 
 let wslocation = 'ws://localhost:3000';
-if(!document.URL.includes('localhost')){
+if(!document.URL.includes('localbrowse')){
 	wslocation = 'wss://chameleon.sdiclarity.com:3000';	
 	
 }
